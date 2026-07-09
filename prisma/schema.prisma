@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guild {
+  id            String          @id
+  createdAt     DateTime        @default(now())
+  modLogEnabled Boolean         @default(false)
+  dmOnAction    Boolean         @default(true)
+  antinuke      AntinukeConfig?
+  logging       LoggingConfig?
+  whitelist     Whitelist[]
+  modRoles      ModRole[]
+  cases         Case[]
+}
+
+model AntinukeConfig {
+  guildId          String  @id
+  guild            Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled          Boolean @default(false)
+  punishment       String  @default("ban") // ban | kick | strip | quarantine | removeperms
+  autoRevert       Boolean @default(true)
+  alertChannelId   String?
+  quarantineRoleId String?
+  antiRaidEnabled  Boolean @default(false)
+  raidJoinCount    Int     @default(10)
+  raidWindowSec    Int     @default(10)
+  panicMode        Boolean @default(false)
+  thresholds       Json    @default("{}") // { actionKey: { limit, windowSec, enabled } }
+}
+
+model Whitelist {
+  id        String   @id @default(cuid())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  targetId  String
+  type      String // user | role
+  addedById String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, targetId])
+}
+
+model LoggingConfig {
+  guildId         String  @id
+  guild           Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  memberJoinLeave String?
+  messageEdit     String?
+  messageDelete   String?
+  modActions      String?
+  roleChanges     String?
+  channelChanges  String?
+  voice           String?
+  serverChanges   String?
+  disabled        Json    @default("[]") // list of category keys turned off
+}
+
+model ModRole {
+  id      String @id @default(cuid())
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  roleId  String
+
+  @@unique([guildId, roleId])
+}
+
+model Case {
+  id          String    @id @default(cuid())
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  caseNumber  Int
+  type        String // ban|tempban|softban|kick|timeout|mute|warn|unban|unmute
+  targetId    String
+  moderatorId String
+  reason      String    @default("No reason provided")
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId, targetId])
+}
