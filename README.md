@@ -47,7 +47,16 @@ action trigger. Anti-raid detects join spikes and kicks new joiners during a rai
 (Ban/Kick/Manage Roles) and a role positioned **above** the members it must act on. Detection is
 audit-log driven, so it is near-real-time, not instant.
 
+## Moderation
+
+A numbered per-guild case system backs every action. Commands (all permission-gated and
+hierarchy-safe): `/ban`, `/unban`, `/tempban`, `/softban`, `/kick`, `/timeout`, `/untimeout`,
+`/warn`, `/warnings`, `/case` (view/reason/delete), `/purge`, `/slowmode`, `/lockdown`,
+`/unlock`, `/nick`. Temp bans lift automatically via a once-per-minute sweep. Set the
+`dmOnAction` toggle (per guild) to DM the target with the reason. Role-based `/mute` arrives
+with the config phase; `/timeout` is the native equivalent today.
+
 ## Status
 
-Phase 1 foundation + Phase 2 anti-nuke complete. Remaining modules (moderation, logging, config,
-help) land in follow-up plans.
+Foundation + anti-nuke + moderation complete. Remaining modules (logging, config, help) land in
+follow-up plans.

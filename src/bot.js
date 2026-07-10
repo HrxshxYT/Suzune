@@ -12,6 +12,8 @@ import { Scheduler } from "./core/Scheduler.js";
 import { discoverCommands, buildCommandMap } from "./core/CommandHandler.js";
 import { discoverEvents, bindEvents } from "./core/EventHandler.js";
 import { AntinukeState } from "./modules/antinuke/AntinukeState.js";
+import { CaseService } from "./modules/moderation/CaseService.js";
+import { registerExpiryJob } from "./modules/moderation/expiry.js";
 
 export async function startBot() {
   const env = loadEnv();
@@ -44,9 +46,11 @@ export async function startBot() {
     cooldowns: new Cooldowns(),
     scheduler: new Scheduler({ cron, logger }),
     antinuke: new AntinukeState(),
+    cases: new CaseService(prisma),
   };
 
   bindEvents(client, listeners, context);
+  registerExpiryJob(context);
   client.once("ready", (c) => logger.info(`Logged in as ${c.user.tag} (shard ready)`));
 
   await client.login(env.token);
