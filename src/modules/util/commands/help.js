@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { errorEmbed } from "../../../lib/embeds.js";
-import { buildHelpOverviewEmbed, buildHelpDetailEmbed } from "../help.js";
+import { buildHelpDetailEmbed, buildCategoryEmbed, categoryNames } from "../help.js";
+import { runPager } from "../../../lib/navigator.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -13,7 +14,14 @@ export default {
   async execute(interaction, ctx) {
     const name = interaction.options.getString("command");
     if (!name) {
-      await interaction.reply({ embeds: [buildHelpOverviewEmbed(ctx.commands)] });
+      const count = categoryNames(ctx.commands).length;
+      await runPager({
+        interaction,
+        count,
+        render: (page) => buildCategoryEmbed(ctx.commands, page),
+        ownerId: interaction.user.id,
+        awaitFn: ctx?.awaitFn,
+      });
       return;
     }
     const command = ctx.commands.get(name);

@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import help from "../../../src/modules/util/commands/help.js";
-import { buildHelpOverviewEmbed, buildHelpDetailEmbed } from "../../../src/modules/util/help.js";
+import {
+  buildHelpOverviewEmbed,
+  buildHelpDetailEmbed,
+  categoryNames,
+  buildCategoryEmbed,
+} from "../../../src/modules/util/help.js";
 
 function commandsMap() {
   return new Map([
@@ -26,12 +31,27 @@ describe("help embeds", () => {
     const s = JSON.stringify(e.data);
     expect(s).toContain("Ban a user");
   });
+  it("categoryNames returns sorted unique categories", () => {
+    expect(categoryNames(commandsMap())).toEqual(["moderation", "util"]);
+  });
+  it("buildCategoryEmbed lists the chosen category's commands with a page counter", () => {
+    const e = buildCategoryEmbed(commandsMap(), 0).toJSON();
+    expect(e.title).toContain("moderation");
+    expect(e.title).toContain("1/2");
+    expect(e.description).toContain("/ban");
+  });
 });
 
 describe("/help command", () => {
-  it("with no argument replies with the overview", async () => {
-    const ctx = { commands: commandsMap() };
-    const i = { options: { getString: () => null }, reply: vi.fn(async () => {}) };
+  it("with no argument opens the paged category browser", async () => {
+    const ctx = { commands: commandsMap(), awaitFn: async () => null };
+    const i = {
+      user: { id: "u1" },
+      options: { getString: () => null },
+      reply: vi.fn(async () => {}),
+      fetchReply: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => {}),
+    };
     await help.execute(i, ctx);
     expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ embeds: expect.any(Array) }));
   });
