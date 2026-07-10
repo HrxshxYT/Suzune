@@ -1,18 +1,33 @@
 import { EmbedBuilder } from "discord.js";
-import { COLORS } from "./constants.js";
+import { COLORS, BOT_NAME, EMOJIS } from "./constants.js";
+
+function base(color) {
+  return new EmbedBuilder().setColor(color).setFooter({ text: BOT_NAME }).setTimestamp();
+}
 
 export function successEmbed(text) {
-  return new EmbedBuilder().setColor(COLORS.success).setDescription(`✅ ${text}`);
+  return base(COLORS.success).setDescription(`${EMOJIS.success} ${text}`);
 }
 
 export function errorEmbed(text) {
-  return new EmbedBuilder().setColor(COLORS.error).setDescription(`❌ ${text}`);
+  return base(COLORS.error).setDescription(`${EMOJIS.error} ${text}`);
 }
 
 export function warnEmbed(text) {
-  return new EmbedBuilder().setColor(COLORS.warn).setDescription(`⚠️ ${text}`);
+  return base(COLORS.warn).setDescription(`${EMOJIS.warn} ${text}`);
 }
 
 export function infoEmbed(title, text) {
-  return new EmbedBuilder().setColor(COLORS.info).setTitle(title).setDescription(text);
+  return base(COLORS.info).setTitle(title).setDescription(text);
 }
+
+export function brandEmbed({ title, description, fields, thumbnail } = {}) {
+  const e = base(COLORS.brand);
+  if (title) e.setTitle(title);
+  if (description) e.setDescription(description);
+  if (Array.isArray(fields) && fields.length) e.addFields(fields);
+  if (thumbnail) e.setThumbnail(thumbnail);
+  return e;
+}
+
+export const panelEmbed = brandEmbed;
