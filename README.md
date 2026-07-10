@@ -104,8 +104,31 @@ enable it in the Developer Portal; without it those filters simply never trigger
   Uses the non-privileged **Guild Message Reactions** gateway intent (no Developer Portal toggle
   required).
 
+## Audit Log
+
+`/auditlog` (Administrator) posts a single consolidated, green-themed feed of **everything** that
+changes in the server to one channel — complementary to the per-category `/logging`.
+
+- `/auditlog channel #log` — set the channel and enable the feed.
+- `/auditlog events` — a **button dashboard** to toggle which categories are tracked.
+- `/auditlog disable` / `/auditlog view`.
+- **Coverage:** member join/leave, bans/unbans, member edits (nickname, roles, timeout), message
+  edits/deletes/bulk-deletes, channel create/delete/update, role create/delete/update, server
+  settings, emojis & stickers, threads, voice activity, and invites. Where the gateway allows,
+  entries are attributed to the responsible user via the audit log. Guild-level only (Discord does
+  not reliably deliver global username/avatar changes).
+
+## Interface & theme
+
+- **Green-forward embeds** across the bot (errors stay red, warnings amber).
+- **Interactive buttons:** paged `/help` and `/invites leaderboard`, an interactive `/tutorial`
+  walkthrough, **Confirm/Cancel** prompts on destructive moderation (`ban/kick/unban/softban/
+  tempban/purge`), and a `/automod panel` button dashboard. Buttons are owner-gated and expire
+  after a few minutes.
+- `/tutorial` — a guided, button-navigated tour of every feature.
+
 ## Status
 
-Phase 1 complete. **Phase 2 complete**: invite tracking, auto-moderation, and
-welcome/autorole/reaction-roles all shipped. Phase 3 (music, leveling/economy/tickets/giveaways,
-web dashboard) is next.
+Phase 1 & 2 complete. **UI overhaul shipped**: green theme, interactive buttons, `/tutorial`, and a
+consolidated `/auditlog` feed. Phase 3 (music, leveling/economy/tickets/giveaways, web dashboard) is
+next.
