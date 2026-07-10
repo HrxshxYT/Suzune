@@ -55,6 +55,22 @@ describe("/automod", () => {
     await command.execute(i, c);
     expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ embeds: expect.any(Array) }));
   });
+
+  it("panel toggles a filter when its button is clicked", async () => {
+    const c = ctx({ enabled: true, action: "delete", antiSpam: true, exemptRoles: [], exemptChannels: [] });
+    const click = { customId: "toggle:spam:mod1", update: vi.fn(async () => {}) };
+    let n = 0;
+    const i = {
+      ...interaction("panel"),
+      user: { id: "mod1" },
+      fetchReply: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => {}),
+    };
+    c.awaitFn = vi.fn(async () => (n++ === 0 ? click : null));
+    await command.execute(i, c);
+    // spam was on → toggled off
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { antiSpam: false });
+  });
 });
 
 describe("buildAutomodEmbed", () => {

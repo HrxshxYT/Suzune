@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { successEmbed, errorEmbed } from "../../../lib/embeds.js";
 import { buildAutomodEmbed } from "../statusEmbed.js";
+import { runToggler } from "../../../lib/navigator.js";
 
 const FILTER_COLUMN = {
   spam: "antiSpam",
@@ -19,6 +20,9 @@ export default {
     .addSubcommand((s) => s.setName("enable").setDescription("Enable auto-moderation."))
     .addSubcommand((s) => s.setName("disable").setDescription("Disable auto-moderation."))
     .addSubcommand((s) => s.setName("view").setDescription("Show auto-moderation settings."))
+    .addSubcommand((s) =>
+      s.setName("panel").setDescription("Interactive dashboard to toggle filters with buttons."),
+    )
     .addSubcommand((s) =>
       s
         .setName("action")
@@ -135,6 +139,25 @@ export default {
     if (sub === "view") {
       const guildConfig = await ctx.config.getGuild(guildId);
       await interaction.reply({ embeds: [buildAutomodEmbed(guildConfig.automod ?? {})] });
+      return;
+    }
+    if (sub === "panel") {
+      let cfg = (await ctx.config.getGuild(guildId)).automod ?? {};
+      await runToggler({
+        interaction,
+        ownerId: interaction.user.id,
+        awaitFn: ctx?.awaitFn,
+        buildItems: () =>
+          Object.entries(FILTER_COLUMN).map(([key, col]) => ({ key, label: key, on: !!cfg[col] })),
+        renderEmbed: () => buildAutomodEmbed(cfg),
+        onToggle: async (key) => {
+          const col = FILTER_COLUMN[key];
+          if (!col) return;
+          const next = !cfg[col];
+          await ctx.config.updateAutomod(guildId, { [col]: next });
+          cfg = { ...cfg, [col]: next };
+        },
+      });
     }
   },
 };
