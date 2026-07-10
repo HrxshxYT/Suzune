@@ -32,7 +32,22 @@ Modular monolith, shard-ready. `src/index.js` spawns per-shard clients (`src/bot
 dependency-injected core services (`src/core/`) and auto-discovering feature modules
 (`src/modules/*`). See `docs/superpowers/specs/` and `docs/superpowers/plans/` for the full design.
 
+## Anti-Nuke
+
+Audit-log-driven protection. Enable with `/antinuke enable` (Administrator only). Watches
+destructive actions per executor in sliding windows — channel/role create & delete, dangerous
+permission grants, mass ban/kick, member prune, webhook create/delete, bot adds, guild/vanity
+changes, emoji/sticker deletion — and on threshold breach applies the configured punishment
+(`/antinuke punishment ban|kick|strip|quarantine|removeperms`), optionally auto-reverts, and
+alerts `/antinuke alertchannel`. Trusted users/roles bypass via `/antinuke whitelist add`.
+The guild owner and the bot are always exempt. `/antinuke panic on` makes any single destructive
+action trigger. Anti-raid detects join spikes and kicks new joiners during a raid.
+
+**Requirements:** the bot needs **View Audit Log** plus the permissions matching its punishment
+(Ban/Kick/Manage Roles) and a role positioned **above** the members it must act on. Detection is
+audit-log driven, so it is near-real-time, not instant.
+
 ## Status
 
-Phase 1 foundation. Feature modules (anti-nuke, moderation, logging, config, help) land in
-follow-up plans.
+Phase 1 foundation + Phase 2 anti-nuke complete. Remaining modules (moderation, logging, config,
+help) land in follow-up plans.

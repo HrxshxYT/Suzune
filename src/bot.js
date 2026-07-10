@@ -11,6 +11,7 @@ import { Cooldowns } from "./core/Cooldowns.js";
 import { Scheduler } from "./core/Scheduler.js";
 import { discoverCommands, buildCommandMap } from "./core/CommandHandler.js";
 import { discoverEvents, bindEvents } from "./core/EventHandler.js";
+import { AntinukeState } from "./modules/antinuke/AntinukeState.js";
 
 export async function startBot() {
   const env = loadEnv();
@@ -42,6 +43,7 @@ export async function startBot() {
     config: new ConfigService(prisma),
     cooldowns: new Cooldowns(),
     scheduler: new Scheduler({ cron, logger }),
+    antinuke: new AntinukeState(),
   };
 
   bindEvents(client, listeners, context);
