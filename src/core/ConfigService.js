@@ -6,6 +6,7 @@ const INCLUDE = {
   whitelist: true,
   welcome: true,
   autoRoles: true,
+  audit: true,
 };
 
 export class ConfigService {
@@ -61,6 +62,17 @@ export class ConfigService {
   async updateWelcome(guildId, data) {
     await this.getGuild(guildId);
     const row = await this.prisma.welcomeConfig.upsert({
+      where: { guildId },
+      create: { guildId, ...data },
+      update: data,
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async updateAudit(guildId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.auditConfig.upsert({
       where: { guildId },
       create: { guildId, ...data },
       update: data,
@@ -135,6 +147,7 @@ export class ConfigService {
     await this.prisma.whitelist.deleteMany({ where: { guildId } });
     await this.prisma.welcomeConfig.deleteMany({ where: { guildId } });
     await this.prisma.autoRole.deleteMany({ where: { guildId } });
+    await this.prisma.auditConfig.deleteMany({ where: { guildId } });
     await this.prisma.guild.update({
       where: { id: guildId },
       data: { dmOnAction: true, muteRoleId: null, modLogEnabled: false },

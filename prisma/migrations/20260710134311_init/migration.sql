@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateTable
 CREATE TABLE "Guild" (
     "id" TEXT NOT NULL,
@@ -151,16 +148,6 @@ CREATE TABLE "AutoRole" (
 );
 
 -- CreateTable
-CREATE TABLE "AuditConfig" (
-    "guildId" TEXT NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "channelId" TEXT,
-    "events" JSONB NOT NULL DEFAULT '{}',
-
-    CONSTRAINT "AuditConfig_pkey" PRIMARY KEY ("guildId")
-);
-
--- CreateTable
 CREATE TABLE "ReactionRole" (
     "id" TEXT NOT NULL,
     "guildId" TEXT NOT NULL,
@@ -224,8 +211,4 @@ ALTER TABLE "WelcomeConfig" ADD CONSTRAINT "WelcomeConfig_guildId_fkey" FOREIGN 
 ALTER TABLE "AutoRole" ADD CONSTRAINT "AutoRole_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AuditConfig" ADD CONSTRAINT "AuditConfig_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "ReactionRole" ADD CONSTRAINT "ReactionRole_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

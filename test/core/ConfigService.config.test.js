@@ -30,6 +30,10 @@ function mockPrisma() {
     whitelist: { deleteMany: vi.fn(async () => ({ count: 1 })) },
     welcomeConfig: { deleteMany: vi.fn(async () => ({ count: 1 })) },
     autoRole: { deleteMany: vi.fn(async () => ({ count: 1 })) },
+    auditConfig: {
+      deleteMany: vi.fn(async () => ({ count: 1 })),
+      upsert: vi.fn(async ({ create, update }) => ({ ...create, ...update })),
+    },
   };
 }
 
@@ -53,6 +57,16 @@ describe("ConfigService config methods", () => {
     });
   });
 
+  it("upserts audit config", async () => {
+    const prisma = mockPrisma();
+    const svc = new ConfigService(prisma);
+    const row = await svc.updateAudit("g1", { enabled: true, channelId: "c9" });
+    expect(prisma.auditConfig.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guildId: "g1" } }),
+    );
+    expect(row.channelId).toBe("c9");
+  });
+
   it("resets all guild config", async () => {
     const prisma = mockPrisma();
     const svc = new ConfigService(prisma);
@@ -63,6 +77,7 @@ describe("ConfigService config methods", () => {
     expect(prisma.whitelist.deleteMany).toHaveBeenCalled();
     expect(prisma.welcomeConfig.deleteMany).toHaveBeenCalled();
     expect(prisma.autoRole.deleteMany).toHaveBeenCalled();
+    expect(prisma.auditConfig.deleteMany).toHaveBeenCalled();
     expect(prisma.guild.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ dmOnAction: true, muteRoleId: null }),

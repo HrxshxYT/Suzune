@@ -17,6 +17,7 @@ model Guild {
   automod       AutomodConfig?
   logging       LoggingConfig?
   welcome       WelcomeConfig?
+  audit         AuditConfig?
   whitelist     Whitelist[]
   modRoles      ModRole[]
   cases         Case[]
@@ -152,6 +153,14 @@ model AutoRole {
   roleId  String
 
   @@unique([guildId, roleId])
+}
+
+model AuditConfig {
+  guildId   String  @id
+  guild     Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled   Boolean @default(false)
+  channelId String?
+  events    Json    @default("{}") // { categoryKey: bool }; missing key = enabled
 }
 
 model ReactionRole {
