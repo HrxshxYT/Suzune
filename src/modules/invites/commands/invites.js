@@ -1,6 +1,9 @@
 import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } from "discord.js";
 import { COLORS } from "../../../lib/constants.js";
 import { successEmbed } from "../../../lib/embeds.js";
+import { paginate } from "../../../lib/components.js";
+import { runPager } from "../../../lib/navigator.js";
+import { buildLeaderboardEmbed } from "../leaderboardEmbed.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -48,14 +51,15 @@ export default {
     }
 
     if (sub === "leaderboard") {
-      const board = await ctx.invites.leaderboard(guildId, 10);
-      const embed = new EmbedBuilder().setColor(COLORS.info).setTitle("🏆 Invite Leaderboard");
-      embed.setDescription(
-        board.length
-          ? board.map((e, idx) => `**${idx + 1}.** <@${e.userId}> — ${e.count}`).join("\n")
-          : "No invites tracked yet.",
-      );
-      await interaction.reply({ embeds: [embed] });
+      const board = await ctx.invites.leaderboard(guildId, 50);
+      const pages = paginate(board, 10);
+      await runPager({
+        interaction,
+        count: Math.max(1, pages.length),
+        render: (page) => buildLeaderboardEmbed(pages[page] ?? [], page, 10),
+        ownerId: interaction.user.id,
+        awaitFn: ctx?.awaitFn,
+      });
       return;
     }
 
