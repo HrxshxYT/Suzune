@@ -104,6 +104,30 @@ CREATE TABLE "InviteBonus" (
     CONSTRAINT "InviteBonus_pkey" PRIMARY KEY ("guildId","userId")
 );
 
+-- CreateTable
+CREATE TABLE "AutomodConfig" (
+    "guildId" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT false,
+    "antiSpam" BOOLEAN NOT NULL DEFAULT true,
+    "spamCount" INTEGER NOT NULL DEFAULT 5,
+    "spamWindowSec" INTEGER NOT NULL DEFAULT 5,
+    "antiMentionSpam" BOOLEAN NOT NULL DEFAULT true,
+    "mentionLimit" INTEGER NOT NULL DEFAULT 5,
+    "filterInvites" BOOLEAN NOT NULL DEFAULT true,
+    "filterLinks" BOOLEAN NOT NULL DEFAULT false,
+    "antiCaps" BOOLEAN NOT NULL DEFAULT false,
+    "capsPercent" INTEGER NOT NULL DEFAULT 70,
+    "capsMinLength" INTEGER NOT NULL DEFAULT 10,
+    "antiEmojiSpam" BOOLEAN NOT NULL DEFAULT false,
+    "emojiLimit" INTEGER NOT NULL DEFAULT 8,
+    "action" TEXT NOT NULL DEFAULT 'delete',
+    "timeoutSeconds" INTEGER NOT NULL DEFAULT 300,
+    "exemptRoles" JSONB NOT NULL DEFAULT '[]',
+    "exemptChannels" JSONB NOT NULL DEFAULT '[]',
+
+    CONSTRAINT "AutomodConfig_pkey" PRIMARY KEY ("guildId")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Whitelist_guildId_targetId_key" ON "Whitelist"("guildId", "targetId");
 
@@ -136,4 +160,7 @@ ALTER TABLE "ModRole" ADD CONSTRAINT "ModRole_guildId_fkey" FOREIGN KEY ("guildI
 
 -- AddForeignKey
 ALTER TABLE "Case" ADD CONSTRAINT "Case_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AutomodConfig" ADD CONSTRAINT "AutomodConfig_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

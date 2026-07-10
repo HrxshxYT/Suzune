@@ -14,6 +14,7 @@ model Guild {
   dmOnAction    Boolean         @default(true)
   muteRoleId    String?
   antinuke      AntinukeConfig?
+  automod       AutomodConfig?
   logging       LoggingConfig?
   whitelist     Whitelist[]
   modRoles      ModRole[]
@@ -106,4 +107,26 @@ model InviteBonus {
   amount  Int    @default(0)
 
   @@id([guildId, userId])
+}
+
+model AutomodConfig {
+  guildId         String  @id
+  guild           Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled         Boolean @default(false)
+  antiSpam        Boolean @default(true)
+  spamCount       Int     @default(5)
+  spamWindowSec   Int     @default(5)
+  antiMentionSpam Boolean @default(true)
+  mentionLimit    Int     @default(5)
+  filterInvites   Boolean @default(true)
+  filterLinks     Boolean @default(false)
+  antiCaps        Boolean @default(false)
+  capsPercent     Int     @default(70)
+  capsMinLength   Int     @default(10)
+  antiEmojiSpam   Boolean @default(false)
+  emojiLimit      Int     @default(8)
+  action          String  @default("delete") // delete | warn | timeout
+  timeoutSeconds  Int     @default(300)
+  exemptRoles     Json    @default("[]")
+  exemptChannels  Json    @default("[]")
 }

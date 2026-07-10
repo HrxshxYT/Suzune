@@ -1,4 +1,4 @@
-const INCLUDE = { antinuke: true, logging: true, modRoles: true, whitelist: true };
+const INCLUDE = { antinuke: true, automod: true, logging: true, modRoles: true, whitelist: true };
 
 export class ConfigService {
   constructor(prisma) {
@@ -31,6 +31,17 @@ export class ConfigService {
   async updateAntinuke(guildId, data) {
     await this.getGuild(guildId); // ensure the parent guild row exists
     const row = await this.prisma.antinukeConfig.upsert({
+      where: { guildId },
+      create: { guildId, ...data },
+      update: data,
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async updateAutomod(guildId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.automodConfig.upsert({
       where: { guildId },
       create: { guildId, ...data },
       update: data,
