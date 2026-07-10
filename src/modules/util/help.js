@@ -1,5 +1,5 @@
 import { EmbedBuilder } from "discord.js";
-import { COLORS } from "../../lib/constants.js";
+import { COLORS, BOT_NAME } from "../../lib/constants.js";
 
 export function buildHelpOverviewEmbed(commands) {
   const groups = new Map();
@@ -10,8 +10,9 @@ export function buildHelpOverviewEmbed(commands) {
   }
   const embed = new EmbedBuilder()
     .setColor(COLORS.info)
-    .setTitle("📖 Commands")
-    .setDescription("Use `/help <command>` for details on any command.");
+    .setTitle(`📖 ${BOT_NAME} — Commands`)
+    .setDescription("Use `/help <command>` for details on any command.")
+    .setFooter({ text: BOT_NAME });
   for (const [category, names] of [...groups.entries()].sort()) {
     embed.addFields({
       name: `${category} (${names.length})`,

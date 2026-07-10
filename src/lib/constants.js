@@ -1,3 +1,5 @@
+export const BOT_NAME = "Joint Jagadeesan";
+
 export const COLORS = {
   success: 0x57f287,
   error: 0xed4245,

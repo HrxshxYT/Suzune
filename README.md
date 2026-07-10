@@ -1,6 +1,9 @@
-# Discord Bot
+# Joint Jagadeesan
 
-Public, multi-server security & moderation bot (Phase 1: foundation).
+Public, multi-server, all-in-one Discord bot — security, moderation, logging, and configuration.
+
+> The bot's **display name** ("Joint Jagadeesan") is set in the Discord Developer Portal; this repo
+> folder name is cosmetic and can stay as-is.
 
 ## Setup
 
