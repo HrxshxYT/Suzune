@@ -30,6 +30,7 @@ export async function startBot() {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildPresences,
       GatewayIntentBits.GuildModeration,
       GatewayIntentBits.GuildWebhooks,
       GatewayIntentBits.GuildInvites,
