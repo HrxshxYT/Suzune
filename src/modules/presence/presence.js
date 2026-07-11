@@ -7,7 +7,7 @@ export const PRESENCE_STATUSES = [
   { name: "High on Joint", type: ActivityType.Custom },
 ];
 
-export const PRESENCE_INTERVAL_MS = 3000;
+export const PRESENCE_INTERVAL_MS = 10000;
 
 // Rotates the client presence through PRESENCE_STATUSES, applying the first one
 // immediately and then advancing on each interval tick. Returns the timer so

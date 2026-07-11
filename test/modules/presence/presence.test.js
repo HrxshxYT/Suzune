@@ -14,7 +14,7 @@ describe("startPresenceRotation", () => {
   afterEach(() => vi.useRealTimers());
 
   it("has the two requested statuses and a 3s interval", () => {
-    expect(PRESENCE_INTERVAL_MS).toBe(3000);
+    expect(PRESENCE_INTERVAL_MS).toBe(10000);
     expect(PRESENCE_STATUSES.map((s) => s.name)).toEqual([
       "/help",
       "High on Joint",
