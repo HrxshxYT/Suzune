@@ -35,13 +35,18 @@ export default {
         kickMember: (m, reason) => m.kick(reason).catch(() => {}),
         sendAlert,
       };
-      await processMemberAdd({
+      const result = await processMemberAdd({
         member,
         guildConfig,
         state: ctx.antinuke,
         deps,
         logger: ctx.logger,
       });
+      if (result?.action === "raid" && ctx.stats) {
+        await ctx.stats
+          .incrementAntinukeTriggers()
+          .catch((err) => ctx.logger.error({ err }, "anti-raid stat increment failed"));
+      }
     } catch (err) {
       ctx.logger.error({ err }, "anti-raid listener error");
     }

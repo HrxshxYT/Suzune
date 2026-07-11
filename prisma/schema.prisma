@@ -175,3 +175,10 @@ model ReactionRole {
   @@unique([guildId, messageId, emoji])
   @@index([guildId, messageId])
 }
+
+// Global, cross-shard singleton counters (e.g. cumulative anti-nuke triggers).
+model BotStat {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}

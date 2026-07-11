@@ -73,7 +73,7 @@ export default {
         revertAction,
         sendAlert,
       };
-      await processAuditEntry({
+      const result = await processAuditEntry({
         entry,
         guild,
         guildConfig,
@@ -81,6 +81,11 @@ export default {
         deps,
         logger: ctx.logger,
       });
+      if (result?.action === "punished" && ctx.stats) {
+        await ctx.stats
+          .incrementAntinukeTriggers()
+          .catch((err) => ctx.logger.error({ err }, "anti-nuke stat increment failed"));
+      }
     } catch (err) {
       ctx.logger.error({ err }, "anti-nuke listener error");
     }
