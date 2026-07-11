@@ -25,8 +25,8 @@ export const TUTORIAL_CHAPTERS = [
     title: `${EMOJIS.shield} Anti-Nuke`,
     body:
       "Protects against mass-destruction and rogue admins.\n\n" +
-      "• `/antinuke enable` turns on protection; configure per-action thresholds (mass ban/kick/channel-delete/role-delete/webhook spam).\n" +
-      "• **Whitelist** trusted users/bots with `/antinuke whitelist add`.\n" +
+      "• `/antinuke` opens a **button control panel** — toggle protection, punishment, alert channel, quarantine role, and anti-raid all in one place.\n" +
+      "• **Whitelist** trusted users/bots from the panel's **Whitelist** button.\n" +
       "• **Anti-raid** auto-acts on floods of new joins; **panic mode** locks the server down.\n" +
       "• Set an alert channel so you're notified the instant something trips.",
   },
@@ -44,7 +44,7 @@ export const TUTORIAL_CHAPTERS = [
     body:
       "Two complementary systems:\n\n" +
       "• **`/logging`** — route each category (joins, message edits/deletes, roles, channels, voice…) to its **own** channel.\n" +
-      "• **`/auditlog`** — a single **consolidated feed** of *everything* that changes in the server, to one channel. `/auditlog channel #log` to start, `/auditlog events` to pick what's tracked.\n" +
+      "• **`/auditlog`** — a single **consolidated feed** of *everything* that changes in the server, to one channel. `/auditlog` opens a **button control panel**: pick the log channel and toggle which event categories are tracked.\n" +
       "Use logging for tidy per-category channels, auditlog for one all-seeing feed.",
   },
   {

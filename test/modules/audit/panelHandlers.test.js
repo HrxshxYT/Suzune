@@ -29,6 +29,14 @@ describe("handleAuditComponent", () => {
     expect(Object.values(arg).every((v) => v === true)).toBe(true);
   });
 
+  it("turns all categories off", async () => {
+    const c = ctx();
+    await handleAuditComponent({ customId: "au:all:off:o1" }, state(), c);
+    const arg = c.config.updateAudit.mock.calls[0][1].events;
+    expect(Object.keys(arg)).toHaveLength(CATEGORIES.length);
+    expect(Object.values(arg).every((v) => v === false)).toBe(true);
+  });
+
   it("disables the feed", async () => {
     const c = ctx();
     const dir = await handleAuditComponent({ customId: "au:disable:o1" }, state(), c);
