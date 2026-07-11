@@ -98,6 +98,76 @@ describe("processAuditEntry", () => {
     expect(d.applyPunishment).not.toHaveBeenCalled();
   });
 
+  it("keeps a whitelisted executor exempt while under the whitelist limit", async () => {
+    const d = deps();
+    const guildConfig = {
+      ...enabledConfig({
+        whitelistLimitEnabled: true,
+        whitelistLimits: { ban: { enabled: true, limit: 3, windowSec: 30 } },
+      }),
+      whitelist: [{ targetId: "attacker", type: "user" }],
+    };
+    const state = new AntinukeState(() => 1000);
+    const res = await processAuditEntry({
+      entry: banEntry("attacker"),
+      guild: baseGuild(),
+      guildConfig,
+      state,
+      deps: d,
+      logger,
+    });
+    expect(res.action).toBe("exempt_whitelist_under");
+    expect(d.applyPunishment).not.toHaveBeenCalled();
+  });
+
+  it("punishes a whitelisted executor who exceeds their per-action whitelist limit", async () => {
+    const d = deps();
+    const guildConfig = {
+      ...enabledConfig({
+        whitelistLimitEnabled: true,
+        whitelistLimits: { ban: { enabled: true, limit: 3, windowSec: 30 } },
+      }),
+      whitelist: [{ targetId: "attacker", type: "user" }],
+    };
+    const state = new AntinukeState(() => 1000);
+    let res;
+    for (let i = 0; i < 3; i++) {
+      res = await processAuditEntry({
+        entry: banEntry("attacker"),
+        guild: baseGuild(),
+        guildConfig,
+        state,
+        deps: d,
+        logger,
+      });
+    }
+    expect(res.action).toBe("punished");
+    expect(d.applyPunishment).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: expect.stringContaining("whitelisted user exceeded") }),
+    );
+  });
+
+  it("ignores whitelist limits when the master toggle is off", async () => {
+    const d = deps();
+    const guildConfig = {
+      ...enabledConfig({
+        whitelistLimitEnabled: false,
+        whitelistLimits: { ban: { enabled: true, limit: 1, windowSec: 30 } },
+      }),
+      whitelist: [{ targetId: "attacker", type: "user" }],
+    };
+    const res = await processAuditEntry({
+      entry: banEntry("attacker"),
+      guild: baseGuild(),
+      guildConfig,
+      state: new AntinukeState(() => 1000),
+      deps: d,
+      logger,
+    });
+    expect(res.action).toBe("exempt_whitelist");
+    expect(d.applyPunishment).not.toHaveBeenCalled();
+  });
+
   it("stays quiet under the threshold", async () => {
     const state = new AntinukeState(() => 1000);
     const d = deps();

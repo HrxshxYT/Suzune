@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isWhitelisted, getThreshold } from "../../../src/modules/antinuke/config.js";
+import {
+  isWhitelisted,
+  getThreshold,
+  getWhitelistLimit,
+} from "../../../src/modules/antinuke/config.js";
 
 const member = (id, roleIds = []) => ({
   id,
@@ -20,6 +24,20 @@ describe("isWhitelisted", () => {
   it("rejects a non-whitelisted member and a null member", () => {
     expect(isWhitelisted(member("u9"), wl)).toBe(false);
     expect(isWhitelisted(null, wl)).toBe(false);
+  });
+});
+
+describe("getWhitelistLimit", () => {
+  it("defaults to disabled with a lenient 20/30s cap", () => {
+    expect(getWhitelistLimit({ whitelistLimits: {} }, "ban")).toEqual({
+      enabled: false,
+      limit: 20,
+      windowSec: 30,
+    });
+  });
+  it("merges a per-action override", () => {
+    const cfg = { whitelistLimits: { ban: { enabled: true, limit: 5, windowSec: 40 } } };
+    expect(getWhitelistLimit(cfg, "ban")).toEqual({ enabled: true, limit: 5, windowSec: 40 });
   });
 });
 

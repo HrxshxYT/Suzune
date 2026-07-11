@@ -1,6 +1,6 @@
 import { Events } from "discord.js";
 import { mapAuditLogEntry } from "./actions.js";
-import { getThreshold, isWhitelisted } from "./config.js";
+import { getThreshold, getWhitelistLimit, isWhitelisted } from "./config.js";
 import { evaluate } from "./engine.js";
 import { applyPunishment } from "./punish.js";
 import { revertAction } from "./revert.js";
@@ -19,26 +19,39 @@ export async function processAuditEntry({ entry, guild, guildConfig, state, deps
   if (executorId === guild.members.me.id) return { action: "exempt_self" };
 
   const member = await deps.fetchMember(guild, executorId);
-  if (isWhitelisted(member, guildConfig.whitelist)) return { action: "exempt_whitelist" };
 
-  const threshold = getThreshold(antinuke, mapped.actionKey);
-  if (!threshold.enabled) return { action: "action_disabled" };
-
-  const count = state.recordAction(
-    guild.id,
-    mapped.actionKey,
-    executorId,
-    threshold.windowSec * 1000,
-  );
-  const { triggered } = evaluate({ count, limit: threshold.limit, panic: antinuke.panicMode });
-  if (!triggered) return { action: "under_threshold", count };
+  let count;
+  let reason;
+  if (isWhitelisted(member, guildConfig.whitelist)) {
+    // Whitelisted users are exempt unless a per-action whitelist limit is on
+    // and they blow past it (a safety net against a compromised trusted account).
+    const wl = antinuke.whitelistLimitEnabled ? getWhitelistLimit(antinuke, mapped.actionKey) : null;
+    if (!wl?.enabled) return { action: "exempt_whitelist" };
+    const wlCount = state.recordAction(
+      guild.id,
+      `wl:${mapped.actionKey}`,
+      executorId,
+      wl.windowSec * 1000,
+    );
+    if (wlCount < wl.limit) return { action: "exempt_whitelist_under", count: wlCount };
+    count = wlCount;
+    reason = `Anti-nuke: whitelisted user exceeded ${mapped.actionKey} limit`;
+  } else {
+    const threshold = getThreshold(antinuke, mapped.actionKey);
+    if (!threshold.enabled) return { action: "action_disabled" };
+    const c = state.recordAction(guild.id, mapped.actionKey, executorId, threshold.windowSec * 1000);
+    const { triggered } = evaluate({ count: c, limit: threshold.limit, panic: antinuke.panicMode });
+    if (!triggered) return { action: "under_threshold", count: c };
+    count = c;
+    reason = `Anti-nuke: excessive ${mapped.actionKey}`;
+  }
 
   const punishment = await deps.applyPunishment({
     type: antinuke.punishment,
     guild,
     executorId,
     member,
-    reason: `Anti-nuke: excessive ${mapped.actionKey}`,
+    reason,
     quarantineRoleId: antinuke.quarantineRoleId,
     logger,
   });

@@ -9,6 +9,21 @@ export function isWhitelisted(member, whitelist = []) {
   return false;
 }
 
+// Preset choices offered in the whitelist-limits panel.
+export const WL_LIMIT_CHOICES = [5, 10, 15, 20, 25];
+export const WL_WINDOW_CHOICES = [10, 20, 30, 40, 60];
+
+// Per-action limit applied to whitelisted users when the feature is on.
+// Defaults to disabled with a lenient 20-actions / 30s cap.
+export function getWhitelistLimit(antinukeConfig, actionKey) {
+  const o = antinukeConfig?.whitelistLimits?.[actionKey] ?? {};
+  return {
+    enabled: o.enabled ?? false,
+    limit: o.limit ?? 20,
+    windowSec: o.windowSec ?? 30,
+  };
+}
+
 export function getThreshold(antinukeConfig, actionKey) {
   const def = DEFAULT_THRESHOLDS[actionKey] ?? { limit: 3, windowSec: 10, enabled: true };
   const override = antinukeConfig?.thresholds?.[actionKey] ?? {};

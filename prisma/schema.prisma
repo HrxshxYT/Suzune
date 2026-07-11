@@ -38,6 +38,10 @@ model AntinukeConfig {
   raidWindowSec    Int     @default(10)
   panicMode        Boolean @default(false)
   thresholds       Json    @default("{}") // { actionKey: { limit, windowSec, enabled } }
+  // When on, whitelisted users are still tripped if they exceed a per-action
+  // limit. whitelistLimits: { actionKey: { enabled, limit, windowSec } }.
+  whitelistLimitEnabled Boolean @default(false)
+  whitelistLimits       Json    @default("{}")
 }
 
 model Whitelist {
