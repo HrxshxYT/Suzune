@@ -10,6 +10,7 @@ export const TUTORIAL_CHAPTERS = [
       "• Make sure my role sits **near the top** of your role list — I can't action members above me.\n" +
       "• Run `/config view` to see your server settings.\n" +
       "• Set moderator roles with `/config modrole add @role` so trusted staff can use mod commands.\n\n" +
+      "• `/ping` shows a bot-health card, `/avatar` shows a user's avatar, `/serverinfo` & `/userinfo` show details.\n\n" +
       "Use the ◀️ ▶️ buttons below to page through this guide.",
   },
   {
@@ -50,7 +51,7 @@ export const TUTORIAL_CHAPTERS = [
     title: `${EMOJIS.wave} Welcome & Roles`,
     body:
       "Onboard new members automatically.\n\n" +
-      "• `/welcome set-channel` + `/welcome set-message` — greet joins; `/welcome goodbye-channel` for farewells. Placeholders: `{mention} {user} {username} {server} {memberCount}`.\n" +
+      "• `/welcome` opens a **control panel** — toggle welcome/goodbye, pick channels, edit messages, and **preview** them. Placeholders: `{mention} {user} {username} {server} {memberCount}`.\n" +
       "• `/autorole add @role` — give roles to everyone on join.\n" +
       "• `/reactionrole add <message_id> <emoji> @role` — let members self-assign roles by reacting.",
   },

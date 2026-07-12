@@ -94,15 +94,19 @@ enable it in the Developer Portal; without it those filters simply never trigger
 
 ## Welcome & Onboarding
 
-- `/welcome` (Administrator) — `set-channel` / `set-message` for greetings, `goodbye-channel` /
-  `goodbye-message` for farewells, plus `disable` and `view`. Messages support the placeholders
-  `{mention}`, `{user}`, `{username}`, `{server}`, and `{memberCount}`.
+- `/welcome` (Administrator) — opens a control panel to toggle welcome/goodbye messages, pick their
+  channels, edit the templates, and preview them. Placeholders: `{mention} {user} {username} {server} {memberCount}`.
 - `/autorole` (Manage Roles) — `add` / `remove` / `list` roles that are automatically granted to
   every member on join.
 - `/reactionrole` (Manage Roles) — `add <message_id> <emoji> <role>` (run in the message's
   channel) makes reacting with that emoji self-assign the role; `remove` and `list` manage bindings.
   Uses the non-privileged **Guild Message Reactions** gateway intent (no Developer Portal toggle
   required).
+
+## Utility
+
+`/ping` renders a bot-health card with a gateway-latency sparkline and uptime. `/avatar [user]` shows a
+user's avatar with download links. `/serverinfo` and `/userinfo` show server/user details.
 
 ## Leveling
 
