@@ -160,6 +160,8 @@ export class ConfigService {
     await this.prisma.welcomeConfig.deleteMany({ where: { guildId } });
     await this.prisma.autoRole.deleteMany({ where: { guildId } });
     await this.prisma.auditConfig.deleteMany({ where: { guildId } });
+    await this.prisma.levelingConfig.deleteMany({ where: { guildId } });
+    await this.prisma.levelReward.deleteMany({ where: { guildId } });
     await this.prisma.guild.update({
       where: { id: guildId },
       data: { dmOnAction: true, muteRoleId: null, modLogEnabled: false },
