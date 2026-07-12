@@ -25,8 +25,8 @@ export const TUTORIAL_CHAPTERS = [
     title: `${EMOJIS.shield} Anti-Nuke`,
     body:
       "Protects against mass-destruction and rogue admins.\n\n" +
-      "• `/antinuke enable` turns on protection; configure per-action thresholds (mass ban/kick/channel-delete/role-delete/webhook spam).\n" +
-      "• **Whitelist** trusted users/bots with `/antinuke whitelist add`.\n" +
+      "• `/antinuke` opens a **button control panel** — toggle protection, punishment, alert channel, quarantine role, and anti-raid all in one place.\n" +
+      "• **Whitelist** trusted users/bots from the panel's **Whitelist** button — only the **server owner** can add or remove entries.\n" +
       "• **Anti-raid** auto-acts on floods of new joins; **panic mode** locks the server down.\n" +
       "• Set an alert channel so you're notified the instant something trips.",
   },
@@ -34,17 +34,16 @@ export const TUTORIAL_CHAPTERS = [
     title: `${EMOJIS.gear} Auto-Moderation`,
     body:
       "Automatically filters bad messages.\n\n" +
-      "• `/automod enable`, then pick an action with `/automod action` (delete / warn / timeout).\n" +
-      "• Toggle filters: **spam**, **mention-spam**, **invite links**, **external links**, **mass-caps**, **emoji spam**.\n" +
-      "• `/automod panel` gives you a **button dashboard** to flip filters on/off by clicking.\n" +
-      "• Exempt roles/channels with `/automod exempt`.",
+      "• `/automod` opens a **button control panel** — one place for everything.\n" +
+      "• Enable it, pick an action (delete / warn / timeout), and toggle filters: **spam**, **mention-spam**, **invite links**, **external links**, **mass-caps**, **emoji spam**.\n" +
+      "• Pick **exempt roles/channels** right from the panel's select menus.",
   },
   {
     title: `${EMOJIS.log} Logging & Audit Log`,
     body:
       "Two complementary systems:\n\n" +
       "• **`/logging`** — route each category (joins, message edits/deletes, roles, channels, voice…) to its **own** channel.\n" +
-      "• **`/auditlog`** — a single **consolidated feed** of *everything* that changes in the server, to one channel. `/auditlog channel #log` to start, `/auditlog events` to pick what's tracked.\n" +
+      "• **`/auditlog`** — a single **consolidated feed** of *everything* that changes in the server, to one channel. `/auditlog` opens a **button control panel**: pick the log channel and toggle which event categories are tracked.\n" +
       "Use logging for tidy per-category channels, auditlog for one all-seeing feed.",
   },
   {
@@ -54,6 +53,15 @@ export const TUTORIAL_CHAPTERS = [
       "• `/welcome set-channel` + `/welcome set-message` — greet joins; `/welcome goodbye-channel` for farewells. Placeholders: `{mention} {user} {username} {server} {memberCount}`.\n" +
       "• `/autorole add @role` — give roles to everyone on join.\n" +
       "• `/reactionrole add <message_id> <emoji> @role` — let members self-assign roles by reacting.",
+  },
+  {
+    title: `${EMOJIS.star} Leveling`,
+    body:
+      "Reward activity with XP and levels.\n\n" +
+      "• `/levels` opens a **control panel** — enable leveling, toggle level-up announcements, set XP rate/cooldown, choose ignored channels/roles, and configure **role rewards**.\n" +
+      "• Members earn XP by chatting (rate-limited); level-ups announce in the current channel.\n" +
+      "• **Role rewards** are **highest-only** — a member wears just their current tier.\n" +
+      "• `/rank` shows a member's level card; `/leaderboard` ranks the server by XP.",
   },
   {
     title: `${EMOJIS.invite} Invite Tracking`,

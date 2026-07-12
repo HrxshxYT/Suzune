@@ -7,6 +7,7 @@ import { loadEnv } from "./config/env.js";
 import { createPrisma } from "./core/db.js";
 import { createLogger } from "./core/Logger.js";
 import { ConfigService } from "./core/ConfigService.js";
+import { StatsService } from "./core/StatsService.js";
 import { Cooldowns } from "./core/Cooldowns.js";
 import { Scheduler } from "./core/Scheduler.js";
 import { discoverCommands, buildCommandMap } from "./core/CommandHandler.js";
@@ -19,6 +20,7 @@ import { InviteService } from "./modules/invites/InviteService.js";
 import { InviteCache } from "./modules/invites/InviteCache.js";
 import { AutomodState } from "./modules/automod/AutomodState.js";
 import { ReactionRoleService } from "./modules/welcome/ReactionRoleService.js";
+import { LevelingService } from "./modules/leveling/LevelingService.js";
 
 export async function startBot() {
   const env = loadEnv();
@@ -29,6 +31,7 @@ export async function startBot() {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildPresences,
       GatewayIntentBits.GuildModeration,
       GatewayIntentBits.GuildWebhooks,
       GatewayIntentBits.GuildInvites,
@@ -57,6 +60,7 @@ export async function startBot() {
     prisma,
     commands,
     config: new ConfigService(prisma),
+    stats: new StatsService(prisma),
     cooldowns: new Cooldowns(),
     scheduler: new Scheduler({ cron, logger }),
     antinuke: new AntinukeState(),
@@ -65,12 +69,15 @@ export async function startBot() {
     inviteCache: new InviteCache(),
     automod: new AutomodState(),
     reactionRoles: new ReactionRoleService(prisma),
+    leveling: new LevelingService(prisma),
   };
 
   bindEvents(client, listeners, context);
   registerExpiryJob(context);
   registerModLogListener(context);
-  client.once("ready", (c) => logger.info(`Logged in as ${c.user.tag} (shard ready)`));
+  client.once("ready", (c) => 
+    logger.info(`Logged in as ${c.user.tag} (shard ready)`));
+
 
   await client.login(env.token);
   return { client, context };

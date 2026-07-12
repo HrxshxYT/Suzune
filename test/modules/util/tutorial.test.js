@@ -6,9 +6,9 @@ import { COLORS } from "../../../src/lib/constants.js";
 describe("tutorial content", () => {
   it("has multiple chapters covering the core systems", () => {
     expect(chapterCount()).toBe(TUTORIAL_CHAPTERS.length);
-    expect(chapterCount()).toBeGreaterThanOrEqual(8);
+    expect(chapterCount()).toBeGreaterThanOrEqual(9);
     const titles = TUTORIAL_CHAPTERS.map((c) => c.title.toLowerCase()).join(" ");
-    for (const kw of ["start", "moderation", "anti-nuke", "auto", "log", "welcome", "invite"]) {
+    for (const kw of ["start", "moderation", "anti-nuke", "auto", "log", "welcome", "leveling", "invite"]) {
       expect(titles).toContain(kw);
     }
   });

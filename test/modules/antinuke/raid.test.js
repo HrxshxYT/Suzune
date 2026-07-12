@@ -44,6 +44,23 @@ describe("processMemberAdd", () => {
     expect(res.action).toBe("under_threshold");
   });
 
+  it("exempts a whitelisted joiner from the raid kick", async () => {
+    const state = new AntinukeState(() => 1000);
+    const d = deps();
+    let res;
+    for (let i = 0; i < 5; i++) {
+      res = await processMemberAdd({
+        member: member(),
+        guildConfig: { ...cfg(), whitelist: [{ targetId: "j1", type: "user" }] },
+        state,
+        deps: d,
+        logger,
+      });
+    }
+    expect(res.action).toBe("exempt_whitelist");
+    expect(d.kickMember).not.toHaveBeenCalled();
+  });
+
   it("flags a raid once the join spike is reached and kicks the joiner", async () => {
     const state = new AntinukeState(() => 1000);
     const d = deps();
