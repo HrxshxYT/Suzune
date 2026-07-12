@@ -34,6 +34,8 @@ function mockPrisma() {
       deleteMany: vi.fn(async () => ({ count: 1 })),
       upsert: vi.fn(async ({ create, update }) => ({ ...create, ...update })),
     },
+    levelingConfig: { deleteMany: vi.fn(async () => ({ count: 1 })) },
+    levelReward: { deleteMany: vi.fn(async () => ({ count: 1 })) },
   };
 }
 
@@ -78,6 +80,9 @@ describe("ConfigService config methods", () => {
     expect(prisma.welcomeConfig.deleteMany).toHaveBeenCalled();
     expect(prisma.autoRole.deleteMany).toHaveBeenCalled();
     expect(prisma.auditConfig.deleteMany).toHaveBeenCalled();
+    expect(prisma.levelingConfig.deleteMany).toHaveBeenCalledWith({ where: { guildId: "g1" } });
+    expect(prisma.levelReward.deleteMany).toHaveBeenCalledWith({ where: { guildId: "g1" } });
+    expect(prisma.memberLevel).toBeUndefined();
     expect(prisma.guild.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ dmOnAction: true, muteRoleId: null }),
