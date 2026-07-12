@@ -17,9 +17,9 @@ export default {
       }
       return;
     }
-    // Component interactions (buttons / select menus) are handled by per-message
-    // collectors inside each command, never by the global router. Ignore strays.
-    if (interaction.isButton?.() || interaction.isStringSelectMenu?.()) return;
+    // All message components (buttons + every select) and modal submits are
+    // owned by per-message collectors inside commands, never the global router.
+    if (interaction.isMessageComponent?.() || interaction.isModalSubmit?.()) return;
 
     if (!interaction.isChatInputCommand()) return;
     const command = ctx.commands.get(interaction.commandName);

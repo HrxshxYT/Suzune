@@ -23,6 +23,7 @@ model Guild {
   cases         Case[]
   autoRoles     AutoRole[]
   reactionRoles ReactionRole[]
+  leveling      LevelingConfig?
 }
 
 model AntinukeConfig {
@@ -38,6 +39,10 @@ model AntinukeConfig {
   raidWindowSec    Int     @default(10)
   panicMode        Boolean @default(false)
   thresholds       Json    @default("{}") // { actionKey: { limit, windowSec, enabled } }
+  // When on, whitelisted users are still tripped if they exceed a per-action
+  // limit. whitelistLimits: { actionKey: { enabled, limit, windowSec } }.
+  whitelistLimitEnabled Boolean @default(false)
+  whitelistLimits       Json    @default("{}")
 }
 
 model Whitelist {
@@ -174,4 +179,40 @@ model ReactionRole {
 
   @@unique([guildId, messageId, emoji])
   @@index([guildId, messageId])
+}
+
+// Global, cross-shard singleton counters (e.g. cumulative anti-nuke triggers).
+model BotStat {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model LevelingConfig {
+  guildId         String  @id
+  guild           Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled         Boolean @default(false)
+  xpMin           Int     @default(15)
+  xpMax           Int     @default(25)
+  cooldownSec     Int     @default(60)
+  announce        Boolean @default(true)
+  ignoredChannels Json    @default("[]")
+  ignoredRoles    Json    @default("[]")
+}
+
+model MemberLevel {
+  guildId String
+  userId  String
+  xp      Int    @default(0)
+
+  @@id([guildId, userId])
+  @@index([guildId, xp])
+}
+
+model LevelReward {
+  guildId String
+  level   Int
+  roleId  String
+
+  @@id([guildId, level])
 }

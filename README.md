@@ -104,6 +104,15 @@ enable it in the Developer Portal; without it those filters simply never trigger
   Uses the non-privileged **Guild Message Reactions** gateway intent (no Developer Portal toggle
   required).
 
+## Leveling
+
+Message-based XP and levels. `/levels` (Administrator) opens a control panel to enable leveling,
+toggle level-up announcements, set the XP range and per-user cooldown, pick ignored channels/roles,
+and configure **role rewards** (highest-only — a member keeps only their current tier). Members earn
+a random amount of XP per message (rate-limited); level-ups are announced in the channel where they
+happen. `/rank [user]` renders an image rank card; `/leaderboard` shows the server's top members by
+XP. Counting uses message events only — no Message Content intent required.
+
 ## Audit Log
 
 `/auditlog` (Administrator) posts a single consolidated, green-themed feed of **everything** that
