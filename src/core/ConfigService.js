@@ -7,6 +7,7 @@ const INCLUDE = {
   welcome: true,
   autoRoles: true,
   audit: true,
+  leveling: true,
 };
 
 export class ConfigService {
@@ -73,6 +74,17 @@ export class ConfigService {
   async updateAudit(guildId, data) {
     await this.getGuild(guildId);
     const row = await this.prisma.auditConfig.upsert({
+      where: { guildId },
+      create: { guildId, ...data },
+      update: data,
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async updateLeveling(guildId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.levelingConfig.upsert({
       where: { guildId },
       create: { guildId, ...data },
       update: data,

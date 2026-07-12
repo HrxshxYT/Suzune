@@ -23,6 +23,7 @@ model Guild {
   cases         Case[]
   autoRoles     AutoRole[]
   reactionRoles ReactionRole[]
+  leveling      LevelingConfig?
 }
 
 model AntinukeConfig {
@@ -185,4 +186,33 @@ model BotStat {
   key       String   @id
   value     Int      @default(0)
   updatedAt DateTime @updatedAt
+}
+
+model LevelingConfig {
+  guildId         String  @id
+  guild           Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled         Boolean @default(false)
+  xpMin           Int     @default(15)
+  xpMax           Int     @default(25)
+  cooldownSec     Int     @default(60)
+  announce        Boolean @default(true)
+  ignoredChannels Json    @default("[]")
+  ignoredRoles    Json    @default("[]")
+}
+
+model MemberLevel {
+  guildId String
+  userId  String
+  xp      Int    @default(0)
+
+  @@id([guildId, userId])
+  @@index([guildId, xp])
+}
+
+model LevelReward {
+  guildId String
+  level   Int
+  roleId  String
+
+  @@id([guildId, level])
 }
