@@ -24,6 +24,7 @@ model Guild {
   autoRoles     AutoRole[]
   reactionRoles ReactionRole[]
   leveling      LevelingConfig?
+  watchVc       WatchVcConfig?
 }
 
 model AntinukeConfig {
@@ -149,6 +150,15 @@ model WelcomeConfig {
   goodbyeEnabled   Boolean @default(false)
   goodbyeChannelId String?
   goodbyeMessage   String  @default("**{user}** has left the server.")
+}
+
+model WatchVcConfig {
+  guildId   String   @id
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId String?
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AutoRole {

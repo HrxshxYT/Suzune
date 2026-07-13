@@ -13,11 +13,12 @@ describe("startPresenceRotation", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it("has the two requested statuses and a 3s interval", () => {
+  it("has the configured statuses and a 10s interval", () => {
     expect(PRESENCE_INTERVAL_MS).toBe(10000);
     expect(PRESENCE_STATUSES.map((s) => s.name)).toEqual([
       "/help",
       "High on Joint",
+      "By hrxshxforpresident",
     ]);
   });
 
@@ -38,11 +39,12 @@ describe("startPresenceRotation", () => {
     expect(c.user.setPresence.mock.calls[1][0].activities[0].name).toBe("High on Joint");
 
     vi.advanceTimersByTime(3000);
-    expect(c.user.setPresence.mock.calls[2][0].activities[0].name).toBe(
-      "/help",
-    );
+    expect(c.user.setPresence.mock.calls[2][0].activities[0].name).toBe("By hrxshxforpresident");
 
-    expect(c.user.setPresence).toHaveBeenCalledTimes(3);
+    vi.advanceTimersByTime(3000);
+    expect(c.user.setPresence.mock.calls[3][0].activities[0].name).toBe("/help");
+
+    expect(c.user.setPresence).toHaveBeenCalledTimes(4);
   });
 
   it("swallows setPresence errors and keeps rotating", () => {

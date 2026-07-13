@@ -22,6 +22,8 @@ import { InviteCache } from "./modules/invites/InviteCache.js";
 import { AutomodState } from "./modules/automod/AutomodState.js";
 import { ReactionRoleService } from "./modules/welcome/ReactionRoleService.js";
 import { LevelingService } from "./modules/leveling/LevelingService.js";
+import { WatchVcService } from "./modules/watchvc/WatchVcService.js";
+import { realDeps as watchVcDeps } from "./modules/watchvc/deps.js";
 
 export async function startBot() {
   const env = loadEnv();
@@ -55,12 +57,14 @@ export async function startBot() {
   const commands = buildCommandMap(await discoverCommands(modulesDir));
   const listeners = await discoverEvents(modulesDir);
 
+  const config = new ConfigService(prisma);
+
   const context = {
     client,
     logger,
     prisma,
     commands,
-    config: new ConfigService(prisma),
+    config,
     stats: new StatsService(prisma),
     cooldowns: new Cooldowns(),
     pingHistory: new PingHistory(),
@@ -72,6 +76,7 @@ export async function startBot() {
     automod: new AutomodState(),
     reactionRoles: new ReactionRoleService(prisma),
     leveling: new LevelingService(prisma),
+    watchvc: new WatchVcService({ client, logger, config, deps: watchVcDeps(client) }),
   };
 
   bindEvents(client, listeners, context);

@@ -8,6 +8,7 @@ const INCLUDE = {
   autoRoles: true,
   audit: true,
   leveling: true,
+  watchVc: true,
 };
 
 export class ConfigService {
@@ -93,6 +94,17 @@ export class ConfigService {
     return row;
   }
 
+  async updateWatchVc(guildId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.watchVcConfig.upsert({
+      where: { guildId },
+      create: { guildId, ...data },
+      update: data,
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
   async addAutoRole(guildId, roleId) {
     await this.getGuild(guildId);
     const row = await this.prisma.autoRole.upsert({
@@ -162,6 +174,7 @@ export class ConfigService {
     await this.prisma.auditConfig.deleteMany({ where: { guildId } });
     await this.prisma.levelingConfig.deleteMany({ where: { guildId } });
     await this.prisma.levelReward.deleteMany({ where: { guildId } });
+    await this.prisma.watchVcConfig.deleteMany({ where: { guildId } });
     await this.prisma.guild.update({
       where: { id: guildId },
       data: { dmOnAction: true, muteRoleId: null, modLogEnabled: false },

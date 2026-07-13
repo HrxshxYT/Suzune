@@ -18,10 +18,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@discordjs/voice": "^0.19.2",
     "@napi-rs/canvas": "^1.0.2",
     "@prisma/client": "^6.1.0",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
+    "libsodium-wrappers": "^0.8.4",
     "node-cron": "^3.0.3",
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
