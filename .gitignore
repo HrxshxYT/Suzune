@@ -10,3 +10,11 @@ prisma/*.db
 # Private planning docs (kept local, not in git)
 Joint_Jagadeesan_Dashboard_Plan.pdf
 Joint_Jagadeesan_Features_and_Roadmap.pdf
+
+# Pterodactyl panel eggs — imported into the panel by hand, and they carry
+# deploy-specific values. Kept local rather than in the repo.
+egg-*.json
+joint*.json
+
+# Local session transcripts
+*local-command-caveat*.txt
