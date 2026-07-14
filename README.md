@@ -9,6 +9,8 @@ Public, multi-server, all-in-one Discord bot — security, moderation, logging, 
 
 1. `npm install`
 2. Copy `.env.example` to `.env` and fill in `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DATABASE_URL`.
+   `DATABASE_URL` is an **external** PostgreSQL connection string — the bot does not run or
+   provision a database of its own, it only connects to one you point it at.
 3. In the [Discord Developer Portal](https://discord.com/developers/applications), enable the
    **Server Members Intent** (privileged). The **Message Content Intent** is only needed later
    (Phase 2 automod / full message-content logging).
