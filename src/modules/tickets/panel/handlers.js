@@ -103,6 +103,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
 
     case "editmeta": {
       const panel = state.panels.find((p) => p.id === state.selectedPanelId);
+      if (!panel) return "update";
       const sub = await promptModal(i, `tk:metamodal:${i.user.id}`, "Edit panel", [
         textRow("title", "Embed title", panel.title, { max: 200 }),
         textRow("description", "Embed description", panel.description, { style: TextInputStyle.Paragraph, max: 2000 }),
@@ -119,6 +120,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
 
     case "addcat": {
       const panel = state.panels.find((p) => p.id === state.selectedPanelId);
+      if (!panel) return "update";
       if ((panel.categories?.length ?? 0) >= LIMITS.maxCategoriesPerPanel) {
         await i.reply({ embeds: [errorEmbed(`Category limit (${LIMITS.maxCategoriesPerPanel}) reached.`)], ephemeral: true });
         return "handled";
