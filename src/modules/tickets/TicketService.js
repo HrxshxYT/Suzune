@@ -114,4 +114,9 @@ export class TicketService {
     if (closedAt !== undefined) data.closedAt = closedAt;
     return this.prisma.ticket.update({ where: { id: ticketId }, data });
   }
+
+  async peekNextNumber(guildId) {
+    const c = await this.prisma.ticketCounter.findUnique({ where: { guildId } });
+    return c?.next ?? 1;
+  }
 }

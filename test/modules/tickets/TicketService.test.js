@@ -81,4 +81,19 @@ describe("TicketService", () => {
       data: { status: "closed", closedAt },
     });
   });
+
+  it("peekNextNumber returns the counter's next value", async () => {
+    const findUnique = vi.fn(async () => ({ next: 7 }));
+    const svc = new TicketService({ ticketCounter: { findUnique } });
+    const n = await svc.peekNextNumber("g1");
+    expect(n).toBe(7);
+    expect(findUnique).toHaveBeenCalledWith({ where: { guildId: "g1" } });
+  });
+
+  it("peekNextNumber defaults to 1 when no counter exists yet", async () => {
+    const findUnique = vi.fn(async () => null);
+    const svc = new TicketService({ ticketCounter: { findUnique } });
+    const n = await svc.peekNextNumber("g1");
+    expect(n).toBe(1);
+  });
 });
