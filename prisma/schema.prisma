@@ -25,6 +25,10 @@ model Guild {
   reactionRoles ReactionRole[]
   leveling      LevelingConfig?
   watchVc       WatchVcConfig?
+  ticketConfig  TicketConfig?
+  ticketPanels  TicketPanel[]
+  tickets       Ticket[]
+  ticketCounter TicketCounter?
 }
 
 model AntinukeConfig {
@@ -225,4 +229,72 @@ model LevelReward {
   roleId  String
 
   @@id([guildId, level])
+}
+
+model TicketConfig {
+  guildId             String  @id
+  guild               Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  enabled             Boolean @default(true)
+  transcriptChannelId String?
+  dmTranscript        Boolean @default(false)
+  logChannelId        String?
+  maxOpenPerUser      Int     @default(1)
+}
+
+model TicketPanel {
+  id          String           @id @default(cuid())
+  guildId     String
+  guild       Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name        String
+  title       String           @default("Open a Ticket")
+  description String           @default("Select a category below to open a ticket.")
+  channelId   String?
+  messageId   String?
+  createdAt   DateTime         @default(now())
+  categories  TicketCategory[]
+
+  @@index([guildId])
+}
+
+model TicketCategory {
+  id                String      @id @default(cuid())
+  panelId           String
+  panel             TicketPanel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  label             String
+  emoji             String?
+  description       String?
+  discordCategoryId String?
+  staffRoleIds      Json        @default("[]")
+  namePrefix        String      @default("ticket")
+  welcomeMessage    String      @default("Thanks {mention}, staff will be with you shortly.")
+  reasonPrompt      String?
+  position          Int         @default(0)
+
+  @@index([panelId])
+}
+
+model Ticket {
+  id          String    @id @default(cuid())
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  number      Int
+  panelId     String?
+  categoryId  String?
+  channelId   String    @unique
+  openerId    String
+  claimedById String?
+  status      String    @default("open") // open | archived | closed
+  reason      String?
+  createdAt   DateTime  @default(now())
+  closedAt    DateTime?
+
+  @@unique([guildId, number])
+  @@index([guildId, status])
+  @@index([openerId, status])
+}
+
+model TicketCounter {
+  guildId String @id
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  next    Int    @default(1)
 }
