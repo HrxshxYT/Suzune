@@ -28,10 +28,10 @@ describe("integrityBar", () => {
 });
 
 describe("buildDashboardEmbeds", () => {
-  it("hosts the card image and summarises status, systems and members", () => {
-    const [embed] = buildDashboardEmbeds(metrics);
+  it("titles the embed for the server and hosts the card image", () => {
+    const [embed] = buildDashboardEmbeds(metrics, { guildName: "Cool Guild" });
     const json = JSON.stringify(embed.data);
-    expect(json).toContain("SECURITY DASHBOARD");
+    expect(json).toContain("Master Dashboard for Cool Guild");
     expect(json).toContain("PROTECTED");
     expect(json).toContain("100%");
     expect(json).toContain("1234"); // members
@@ -42,10 +42,15 @@ describe("buildDashboardEmbeds", () => {
     expect(embed.data.color).toBe(0x2ecc71);
   });
 
-  it("shows the firewall status from the metrics", () => {
+  it("falls back to a generic title when no guild name is given", () => {
+    const [embed] = buildDashboardEmbeds(metrics);
+    expect(embed.data.title).toContain("Master Dashboard for This Server");
+  });
+
+  it("shows the shield status from the metrics", () => {
     const [on] = buildDashboardEmbeds(metrics);
-    expect(JSON.stringify(on.data)).toContain("**Firewall:** Active");
+    expect(JSON.stringify(on.data)).toContain("**Shield:** Armed");
     const [off] = buildDashboardEmbeds({ ...metrics, firewall: false });
-    expect(JSON.stringify(off.data)).toContain("**Firewall:** Offline");
+    expect(JSON.stringify(off.data)).toContain("**Shield:** Down");
   });
 });

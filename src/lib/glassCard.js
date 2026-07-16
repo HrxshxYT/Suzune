@@ -141,6 +141,22 @@ export function accentEdge(ctx, x, y, w, h, color, radius = 3) {
   ctx.restore();
 }
 
+// Truncates text with an ellipsis so it fits within maxWidth at the given font.
+export function ellipsize(ctx, text, maxWidth, size, weight = "") {
+  ctx.save();
+  ctx.font = `${weight} ${size}px ${FONT}`.trim();
+  if (ctx.measureText(text).width <= maxWidth) {
+    ctx.restore();
+    return text;
+  }
+  let out = text;
+  while (out.length > 1 && ctx.measureText(`${out}…`).width > maxWidth) {
+    out = out.slice(0, -1);
+  }
+  ctx.restore();
+  return `${out}…`;
+}
+
 export function drawText(ctx, str, x, y, opts = {}) {
   const { size, color, weight = "", align = "left", maxWidth } = opts;
   ctx.save();

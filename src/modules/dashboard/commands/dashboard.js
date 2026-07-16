@@ -34,9 +34,9 @@ export default {
       const config = await ctx.config.getGuild(guild.id);
       const webhooks = await safeWebhooks(guild);
       const metrics = computeMetrics({ guild, config, webhooks });
-      const png = buildDashboardCard(metrics);
+      const png = buildDashboardCard(metrics, { guildName: guild.name });
       const file = new AttachmentBuilder(png, { name: CARD_FILENAME });
-      return { embeds: buildDashboardEmbeds(metrics), files: [file] };
+      return { embeds: buildDashboardEmbeds(metrics, { guildName: guild.name }), files: [file] };
     };
 
     const message = await interaction.editReply(await render());

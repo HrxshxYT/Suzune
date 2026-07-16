@@ -7,15 +7,16 @@ import {
   accentEdge,
   drawText,
   glassBar,
+  ellipsize,
 } from "../../lib/glassCard.js";
 
 const W = 1000;
 const H = 848;
 const P = 28;
 
-// Renders the live security dashboard as a purple liquid-glass PNG. The whole
+// Renders the live master dashboard as a purple liquid-glass PNG. The whole
 // card is tinted by the security tier so it reads as an at-a-glance index.
-export function buildDashboardCard(metrics) {
+export function buildDashboardCard(metrics, { guildName = "This Server" } = {}) {
   const m = metrics;
   const accent = tierAccent(m.tier.label);
 
@@ -25,24 +26,24 @@ export function buildDashboardCard(metrics) {
   paintBackground(ctx, W, H, accent);
 
   // Header.
-  drawText(ctx, "ATHENA'S SECURITY DASHBOARD", P + 14, 56, {
+  drawText(ctx, ellipsize(ctx, `Master Dashboard for ${guildName}`, W - 2 * P - 10, 34, "bold"), P + 14, 56, {
     size: 34,
     color: GLASS.text,
     weight: "bold",
   });
   drawText(
     ctx,
-    `STATUS: ${m.tier.label}    ·    FIREWALL: ${m.firewall ? "ACTIVE" : "OFFLINE"}    ·    MEMBERS: ${m.members}    ·    LIVE MONITORING: ACTIVE`,
+    `POSTURE: ${m.tier.label}    ·    SHIELD: ${m.firewall ? "ARMED" : "DOWN"}    ·    MEMBERS: ${m.members}    ·    SYNC: LIVE`,
     P + 16,
     88,
     { size: 16, color: GLASS.label },
   );
 
-  // Integrity panel.
+  // Protection-score panel.
   const ipY = 108;
   const ipH = 138;
   glassPanel(ctx, P, ipY, W - 2 * P, ipH, { radius: 22 });
-  drawText(ctx, "SYSTEM INTEGRITY INDEX", P + 28, ipY + 44, {
+  drawText(ctx, "PROTECTION SCORE", P + 28, ipY + 44, {
     size: 16,
     color: GLASS.label,
   });
@@ -67,18 +68,18 @@ export function buildDashboardCard(metrics) {
   const threatEdge = (n) => (n > 0 ? GLASS.danger : accent);
 
   const cells = [
-    { symbol: "@", label: "ROLES", value: m.roles, color: GLASS.text, edge: accent },
-    { symbol: "★", label: "ADMIN ROLES", value: m.adminRoles, color: GLASS.text, edge: accent },
-    { symbol: "!", label: "THREAT ROLES", value: m.threatRoles, color: threatColor(m.threatRoles), edge: threatEdge(m.threatRoles) },
-    { symbol: "‼", label: "PERM RISK", value: m.permRisk, color: threatColor(m.permRisk), edge: threatEdge(m.permRisk) },
+    { symbol: "@", label: "TOTAL ROLES", value: m.roles, color: GLASS.text, edge: accent },
+    { symbol: "★", label: "ELEVATED ROLES", value: m.adminRoles, color: GLASS.text, edge: accent },
+    { symbol: "!", label: "RISKY ROLES", value: m.threatRoles, color: threatColor(m.threatRoles), edge: threatEdge(m.threatRoles) },
+    { symbol: "‼", label: "EXPOSURE", value: m.permRisk, color: threatColor(m.permRisk), edge: threatEdge(m.permRisk) },
     { symbol: "#", label: "CHANNELS", value: m.channels, color: GLASS.text, edge: accent },
-    { symbol: "+", label: "PRIVILEGED", value: m.privileged, color: GLASS.text, edge: accent },
-    { symbol: "✕", label: "THREAT USERS", value: m.threatUsers, color: threatColor(m.threatUsers), edge: threatEdge(m.threatUsers) },
-    { symbol: "@", label: "INTEGRATIONS", value: m.integrations, color: GLASS.text, edge: accent },
-    { symbol: "●", label: "TOTAL ASSETS", value: m.totalAssets, color: GLASS.text, edge: accent },
-    { symbol: "▲", label: "THREAT ASSETS", value: m.threatAssets, color: threatColor(m.threatAssets), edge: threatEdge(m.threatAssets) },
-    { symbol: "»", label: "ACTIVITY", value: "Tracking", color: GLASS.accentSoft, edge: accent },
-    { symbol: "▣", label: "FIREWALL", value: m.firewall ? "Active" : "Offline", color: m.firewall ? GLASS.good : GLASS.danger, edge: m.firewall ? accent : GLASS.danger },
+    { symbol: "+", label: "OPERATORS", value: m.privileged, color: GLASS.text, edge: accent },
+    { symbol: "✕", label: "FLAGGED USERS", value: m.threatUsers, color: threatColor(m.threatUsers), edge: threatEdge(m.threatUsers) },
+    { symbol: "@", label: "CONNECTED APPS", value: m.integrations, color: GLASS.text, edge: accent },
+    { symbol: "●", label: "WEBHOOKS", value: m.totalAssets, color: GLASS.text, edge: accent },
+    { symbol: "▲", label: "RISKY HOOKS", value: m.threatAssets, color: threatColor(m.threatAssets), edge: threatEdge(m.threatAssets) },
+    { symbol: "»", label: "SURVEILLANCE", value: "Live", color: GLASS.accentSoft, edge: accent },
+    { symbol: "▣", label: "SHIELD", value: m.firewall ? "Armed" : "Down", color: m.firewall ? GLASS.good : GLASS.danger, edge: m.firewall ? accent : GLASS.danger },
   ];
 
   cells.forEach((cell, i) => {
@@ -105,7 +106,7 @@ export function buildDashboardCard(metrics) {
   const coreH = 118;
   glassPanel(ctx, P, coreY, W - 2 * P, coreH, { radius: 20 });
   accentEdge(ctx, P + 14, coreY + 16, 5, coreH - 32, accent);
-  drawText(ctx, ">> ACTIVE MONITORING CORE", P + 28, coreY + 42, {
+  drawText(ctx, ">> LIVE THREAT FEED", P + 28, coreY + 42, {
     size: 20,
     color: GLASS.accentSoft,
     weight: "bold",
@@ -114,8 +115,8 @@ export function buildDashboardCard(metrics) {
   drawText(
     ctx,
     clean
-      ? "> No recent security events detected."
-      : "> Elevated exposure detected — review threat metrics above.",
+      ? "> All clear — nothing on the radar right now."
+      : "> Heads up — review the flagged metrics above.",
     P + 28,
     coreY + 82,
     { size: 17, color: clean ? GLASS.muted : GLASS.danger },

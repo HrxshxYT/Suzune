@@ -12,9 +12,9 @@ export function integrityBar(pct, length = 18) {
 }
 
 // Hosts the rendered dashboard card image. The image carries the full metric
-// grid; the embed adds a searchable/accessible text summary of the status, the
+// grid; the embed adds a searchable/accessible text summary of the posture, the
 // live security toggles and the member count, plus the dev-credit footer.
-export function buildDashboardEmbeds(metrics) {
+export function buildDashboardEmbeds(metrics, { guildName } = {}) {
   const m = metrics;
   const sync = Math.floor(Date.now() / 1000);
 
@@ -24,19 +24,19 @@ export function buildDashboardEmbeds(metrics) {
 
   const embed = new EmbedBuilder()
     .setColor(m.tier.color)
-    .setTitle("🛡️ ATHENA'S SECURITY DASHBOARD")
+    .setTitle(`🛡️ Master Dashboard for ${guildName ?? "This Server"}`)
     .setDescription(
       [
-        `**Status:** ${m.tier.label}`,
-        `**Firewall:** ${m.firewall ? "Active" : "Offline"}`,
+        `**Posture:** ${m.tier.label}`,
+        `**Shield:** ${m.firewall ? "Armed" : "Down"}`,
         `**Members:** ${m.members}`,
         `**Last Sync:** <t:${sync}:R>`,
-        `**Live Monitoring:** Active`,
+        `**Surveillance:** Live`,
         "",
-        `**Integrity:** \`${integrityBar(m.integrity)}\` ${m.integrity}%`,
+        `**Protection Score:** \`${integrityBar(m.integrity)}\` ${m.integrity}%`,
       ].join("\n"),
     )
-    .addFields({ name: ">> Security Systems", value: systems, inline: false })
+    .addFields({ name: ">> Active Defenses", value: systems, inline: false })
     .setImage(`attachment://${CARD_FILENAME}`)
     .setFooter({ text: DEV_CREDIT })
     .setTimestamp();
