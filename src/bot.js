@@ -25,6 +25,7 @@ import { LevelingService } from "./modules/leveling/LevelingService.js";
 import { TicketService } from "./modules/tickets/TicketService.js";
 import { WatchVcService } from "./modules/watchvc/WatchVcService.js";
 import { realDeps as watchVcDeps } from "./modules/watchvc/deps.js";
+import { DashboardService } from "./modules/dashboard/DashboardService.js";
 
 export async function startBot() {
   const env = loadEnv();
@@ -79,6 +80,7 @@ export async function startBot() {
     leveling: new LevelingService(prisma),
     tickets: new TicketService(prisma),
     watchvc: new WatchVcService({ client, logger, config, deps: watchVcDeps(client) }),
+    dashboards: new DashboardService({ logger }),
   };
 
   bindEvents(client, listeners, context);
