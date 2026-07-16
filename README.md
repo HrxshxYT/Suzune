@@ -142,8 +142,17 @@ changes in the server to one channel — complementary to the per-category `/log
   after a few minutes.
 - `/tutorial` — a guided, button-navigated tour of every feature.
 
+## Tickets
+
+Run `/tickets` to open the ticket control panel. Create one or more **panels**,
+each with a **category dropdown**; publish a panel to any channel. Members pick a
+category to open a private ticket channel (optional reason modal). Staff can
+**claim**, **add/remove members**, and **close** — a two-stage flow that archives,
+saves a plain-text transcript to the configured channel (optionally DMing the
+opener), then deletes the channel.
+
 ## Status
 
-Phase 1 & 2 complete. **UI overhaul shipped**: green theme, interactive buttons, `/tutorial`, and a
-consolidated `/auditlog` feed. Phase 3 (music, leveling/economy/tickets/giveaways, web dashboard) is
-next.
+Phase 1 complete. **UI overhaul shipped**: green theme, interactive buttons, `/tutorial`, and a
+consolidated `/auditlog` feed. Phase 2 (leveling, tickets, starboard, giveaways) is underway —
+**leveling** and **tickets** are shipped (2 of 4); starboard and giveaways are next.

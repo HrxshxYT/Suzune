@@ -74,6 +74,11 @@ export const TUTORIAL_CHAPTERS = [
       "I need **Manage Server** to read the invite list.",
   },
   {
+    title: `🎫 Tickets`,
+    body:
+      "**🎫 Tickets** — Run `/tickets` to build panels. Each panel shows a category dropdown members use to open a private ticket channel. Staff can claim, add/remove members, and close (archive → transcript → delete).",
+  },
+  {
     title: `${EMOJIS.star} Tips & Support`,
     body:
       "• `/help` lists every command; `/help <command>` explains one.\n" +
