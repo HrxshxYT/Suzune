@@ -1,9 +1,16 @@
 import { createCanvas } from "@napi-rs/canvas";
-import { ensureCardFont } from "../../lib/cardFont.js";
+import {
+  GLASS,
+  hexToRgba,
+  paintBackground,
+  glassPanel,
+  accentEdge,
+  drawText,
+  roundRectPath,
+} from "../../lib/glassCard.js";
 
-const FONT = ensureCardFont();
-const W = 700;
-const H = 240;
+const W = 760;
+const H = 300;
 
 export function formatUptime(ms) {
   if (!ms || ms < 0) return "0m";
@@ -31,41 +38,77 @@ export function sparklinePoints(samples, { width, height, min, max }) {
   }));
 }
 
+// Latency health colour, kept on the purple palette (violet = great).
 function pingColor(ping) {
-  if (ping < 0) return "#9fb3ab";
-  if (ping <= 150) return "#2ecc71";
-  if (ping <= 300) return "#fee75c";
-  return "#ed4245";
+  if (ping < 0) return GLASS.muted;
+  if (ping <= 150) return GLASS.accent;
+  if (ping <= 300) return GLASS.warn;
+  return GLASS.danger;
+}
+
+function pingLabel(ping) {
+  if (ping < 0) return "OFFLINE";
+  if (ping <= 150) return "EXCELLENT";
+  if (ping <= 300) return "FAIR";
+  return "DEGRADED";
 }
 
 export async function buildPingCard({ samples, currentPing, uptimeMs }) {
+  const accent = pingColor(currentPing);
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#1f2724";
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#2ecc71";
-  ctx.fillRect(0, 0, 10, H);
+  paintBackground(ctx, W, H, accent);
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `30px ${FONT}`;
-  ctx.fillText("🏓 Bot Health", 40, 55);
+  drawText(ctx, "BOT HEALTH", 40, 52, { size: 24, color: GLASS.label, weight: "bold" });
 
-  // Current latency (big, colored)
-  ctx.fillStyle = pingColor(currentPing);
-  ctx.font = `64px ${FONT}`;
-  ctx.fillText(currentPing < 0 ? "—" : `${currentPing}ms`, 40, 130);
+  // Latency panel (left).
+  const lpW = 300;
+  glassPanel(ctx, 32, 70, lpW, H - 102, { radius: 20 });
+  accentEdge(ctx, 46, 88, 5, H - 138, accent);
+  drawText(ctx, "GATEWAY LATENCY", 62, 108, { size: 14, color: GLASS.label });
+  drawText(ctx, currentPing < 0 ? "—" : `${currentPing}ms`, 60, 178, {
+    size: 62,
+    color: accent,
+    weight: "bold",
+  });
+  drawText(ctx, pingLabel(currentPing), 62, 214, { size: 16, color: GLASS.accentSoft });
+  drawText(ctx, `Uptime: ${formatUptime(uptimeMs)}`, 62, 244, { size: 16, color: GLASS.muted });
 
-  ctx.fillStyle = "#9fb3ab";
-  ctx.font = `24px ${FONT}`;
-  ctx.fillText(`Uptime: ${formatUptime(uptimeMs)}`, 40, 170);
+  // Sparkline panel (right).
+  const spX = 352;
+  const spW = W - spX - 32;
+  glassPanel(ctx, spX, 70, spW, H - 102, { radius: 20 });
+  drawText(ctx, "LATENCY TREND", spX + 22, 108, { size: 14, color: GLASS.label });
 
-  // Sparkline (or collecting state)
-  const gx = 40, gy = 185, gw = W - 80, gh = 35;
+  const gx = spX + 22;
+  const gy = 132;
+  const gw = spW - 44;
+  const gh = H - 200;
   if (samples.length >= 2) {
     const pts = sparklinePoints(samples, { width: gw, height: gh });
-    ctx.strokeStyle = "#2ecc71";
+    // Soft area fill under the line.
+    ctx.save();
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const x = gx + p.x;
+      const y = gy + p.y;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(gx + gw, gy + gh);
+    ctx.lineTo(gx, gy + gh);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, gy, 0, gy + gh);
+    grad.addColorStop(0, hexToRgba(accent, 0.4));
+    grad.addColorStop(1, hexToRgba(accent, 0));
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = accent;
     ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
     ctx.beginPath();
     pts.forEach((p, i) => {
       const x = gx + p.x;
@@ -74,11 +117,29 @@ export async function buildPingCard({ samples, currentPing, uptimeMs }) {
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
+
+    // Highlight the latest point.
+    const last = pts[pts.length - 1];
+    ctx.beginPath();
+    ctx.arc(gx + last.x, gy + last.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = GLASS.text;
+    ctx.fill();
   } else {
-    ctx.fillStyle = "#9fb3ab";
-    ctx.font = `20px ${FONT}`;
-    ctx.fillText("collecting latency data…", gx, gy + 24);
+    roundRectPath(ctx, gx, gy + gh / 2 - 14, gw, 28, 14);
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.fill();
+    drawText(ctx, "collecting latency data…", gx + gw / 2, gy + gh / 2 + 5, {
+      size: 16,
+      color: GLASS.muted,
+      align: "center",
+    });
   }
+
+  drawText(ctx, "Developed by hrxshxforpresident", W / 2, H - 16, {
+    size: 14,
+    color: GLASS.muted,
+    align: "center",
+  });
 
   return canvas.toBuffer("image/png");
 }

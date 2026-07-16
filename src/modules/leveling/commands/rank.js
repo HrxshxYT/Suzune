@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, AttachmentBuilder } from "discord.js";
+import { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } from "discord.js";
 import { buildRankData } from "../rankData.js";
 import { buildRankCard } from "../card.js";
+import { COLORS } from "../../../lib/constants.js";
 
 async function fetchAvatarPng(user) {
   const url = user.displayAvatarURL({ extension: "png", size: 256 });
@@ -33,6 +34,14 @@ export default {
     const png = await buildRankCard({ username: user.username, avatarPng, ...data });
 
     const file = new AttachmentBuilder(png, { name: "rank.png" });
-    await interaction.editReply({ files: [file] });
+    const embed = new EmbedBuilder()
+      .setColor(COLORS.brand)
+      .setAuthor({ name: `${user.username}'s Rank`, iconURL: user.displayAvatarURL() })
+      .setDescription(
+        `**Rank** #${rank} · **Level** ${data.level} · **${data.xpIntoLevel}/${data.xpForNext} XP** to next level`,
+      )
+      .setImage("attachment://rank.png")
+      .setFooter({ text: "Developed by hrxshxforpresident" });
+    await interaction.editReply({ embeds: [embed], files: [file] });
   },
 };

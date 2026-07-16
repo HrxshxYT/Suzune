@@ -105,10 +105,34 @@ enable it in the Developer Portal; without it those filters simply never trigger
   Uses the non-privileged **Guild Message Reactions** gateway intent (no Developer Portal toggle
   required).
 
+## Security Dashboard & Scan
+
+Two admin tools (**Manage Server**) turn the security posture into a picture. Both render a
+purple **liquid-glass** card image (iOS-26 style, `@napi-rs/canvas`) hosted in an embed, and both
+compute the same analytics: a **System Integrity Index** (0–100 %) with a tier
+(**PROTECTED / GUARDED / ELEVATED / AT RISK**) plus roles, admin roles, threat roles, permission
+risk, channels, privileged users, threat users, integrations, webhook assets, and member count.
+The card is tinted by the tier so it reads as an index at a glance; threat metrics turn red when
+non-zero.
+
+- `/dashboard` — posts a **live** dashboard that regenerates its card and **refreshes every 5
+  seconds** (a bounded, self-cleaning loop that stops when the message is deleted). Shows which
+  protections are enabled (Anti-Nuke, Anti-Raid, Auto-Mod, Auto-Revert, Panic Mode, Mod Logging)
+  and the member count.
+- `/scan` — runs a **deep, one-shot security audit** and returns a graded report (A+ → F). It
+  detects **threats and broken roles**: disabled protections, dangerous `@everyone` permissions,
+  un-vouched administrators, unmanaged admin roles, privileged roles ranked **above the bot** (which
+  the bot can't act on), missing bot permissions, unaccountable webhooks, low verification level, and
+  no 2FA requirement. Findings are prioritised critical → warning → info, and it **recommends the
+  exact settings the owner/admin should turn on** (e.g. `/antinuke enable`, `/automod`, `/logging`,
+  `/antinuke whitelist add`). Needs **Manage Webhooks** to audit webhook assets; it degrades
+  gracefully without it.
+
 ## Utility
 
-`/ping` renders a bot-health card with a gateway-latency sparkline and uptime. `/avatar [user]` shows a
-user's avatar with download links. `/serverinfo` and `/userinfo` show server/user details.
+`/ping` renders a glass **bot-health** card (gateway latency + a latency-trend sparkline + uptime)
+inside an embed. `/avatar [user]` shows a user's avatar with download links. `/serverinfo` and
+`/userinfo` show server/user details.
 
 ## Leveling
 
@@ -116,7 +140,7 @@ Message-based XP and levels. `/levels` (Administrator) opens a control panel to 
 toggle level-up announcements, set the XP range and per-user cooldown, pick ignored channels/roles,
 and configure **role rewards** (highest-only — a member keeps only their current tier). Members earn
 a random amount of XP per message (rate-limited); level-ups are announced in the channel where they
-happen. `/rank [user]` renders an image rank card; `/leaderboard` shows the server's top members by
+happen. `/rank [user]` renders a glass image rank card in an embed; `/leaderboard` shows the server's top members by
 XP. Counting uses message events only — no Message Content intent required.
 
 ## Audit Log
@@ -136,6 +160,8 @@ changes in the server to one channel — complementary to the per-category `/log
 ## Interface & theme
 
 - **Green-forward embeds** across the bot (errors stay red, warnings amber).
+- **Purple liquid-glass image cards** (iOS-26 style) for `/dashboard`, `/scan`, `/ping`, and
+  `/rank`, sharing one card kit (`src/lib/glassCard.js`).
 - **Interactive buttons:** paged `/help` and `/invites leaderboard`, an interactive `/tutorial`
   walkthrough, **Confirm/Cancel** prompts on destructive moderation (`ban/kick/unban/softban/
   tempban/purge`), and a `/automod panel` button dashboard. Buttons are owner-gated and expire
