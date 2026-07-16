@@ -81,8 +81,8 @@ export async function createTicketChannel({ interaction, ctx, panelId, category,
   }
 
   const me = guild.members.me;
-  if (me && !me.permissions.has(PermissionFlagsBits.ManageChannels)) {
-    await interaction.reply({ embeds: [errorEmbed("I need the **Manage Channels** permission to open tickets.")], ephemeral: true });
+  if (me && (!me.permissions.has(PermissionFlagsBits.ManageChannels) || !me.permissions.has(PermissionFlagsBits.ManageRoles))) {
+    await interaction.reply({ embeds: [errorEmbed("I need the **Manage Channels** and **Manage Roles** permissions to open tickets.")], ephemeral: true });
     return;
   }
 

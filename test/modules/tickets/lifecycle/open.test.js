@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { PermissionFlagsBits } from "discord.js";
 import { renderWelcome, createTicketChannel, inTicketControls } from "../../../../src/modules/tickets/lifecycle/open.js";
 
 describe("renderWelcome", () => {
@@ -70,6 +71,23 @@ describe("createTicketChannel", () => {
       expect.objectContaining({ guildId: "g1", categoryId: "c1", openerId: "u1", channelId: "chan1", reason: "help me" }),
     );
     expect(i._created.send).toHaveBeenCalled();
+    expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+  });
+
+  it("blocks opening when the bot lacks Manage Roles even with Manage Channels", async () => {
+    const i = makeInteraction();
+    i.guild.members.me.permissions.has = (flag) => flag !== PermissionFlagsBits.ManageRoles;
+    const ctx = {
+      tickets: {
+        getConfig: vi.fn(async () => ({ maxOpenPerUser: 0 })),
+        countOpenForUser: vi.fn(async () => 0),
+        createTicket: vi.fn(async () => ({ id: "t1", number: 1, channelId: "chan1" })),
+        peekNextNumber: vi.fn(async () => 1),
+      },
+      logger: { error: vi.fn() },
+    };
+    await createTicketChannel({ interaction: i, ctx, panelId: "p1", category, reason: null });
+    expect(i.guild.channels.create).not.toHaveBeenCalled();
     expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
   });
 });

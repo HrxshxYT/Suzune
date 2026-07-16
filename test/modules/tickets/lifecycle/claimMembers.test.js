@@ -1,22 +1,60 @@
 import { describe, it, expect, vi } from "vitest";
+import { EmbedBuilder } from "discord.js";
 import { handleClaim } from "../../../../src/modules/tickets/lifecycle/claim.js";
 import { handleMembers, handleMemberPick } from "../../../../src/modules/tickets/lifecycle/members.js";
 
 const ticket = (over = {}) => ({ id: "t1", claimedById: null, channelId: "chan1", ...over });
 
 describe("handleClaim", () => {
-  it("claims for the caller when unclaimed", async () => {
+  it("claims for the caller when unclaimed (no embed on the message)", async () => {
     const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
-    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [] } };
+    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
     await handleClaim(i, ctx, ticket());
     expect(ctx.tickets.setClaim).toHaveBeenCalledWith("t1", "staff1");
+    expect(i.update).toHaveBeenCalledWith({ components: [] });
   });
 
   it("unclaims when the current claimer clicks again", async () => {
     const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
-    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [] } };
+    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
     await handleClaim(i, ctx, ticket({ claimedById: "staff1" }));
     expect(ctx.tickets.setClaim).toHaveBeenCalledWith("t1", null);
+  });
+
+  it("rebuilds the embed with a Claimed by field when claiming", async () => {
+    const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
+    const i = {
+      user: { id: "staff1" },
+      update: vi.fn(async () => ({})),
+      channel: { send: vi.fn(async () => ({})) },
+      message: { components: [], embeds: [new EmbedBuilder().setTitle("Ticket #1").toJSON()] },
+    };
+    await handleClaim(i, ctx, ticket());
+    expect(i.update).toHaveBeenCalledTimes(1);
+    const payload = i.update.mock.calls[0][0];
+    expect(payload.embeds).toHaveLength(1);
+    const fields = payload.embeds[0].data.fields;
+    expect(fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "Claimed by", value: "<@staff1>" }),
+    ]));
+  });
+
+  it("removes the Claimed by field when unclaiming", async () => {
+    const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
+    const claimedEmbed = new EmbedBuilder()
+      .setTitle("Ticket #1")
+      .setFields([{ name: "Claimed by", value: "<@staff1>", inline: true }])
+      .toJSON();
+    const i = {
+      user: { id: "staff1" },
+      update: vi.fn(async () => ({})),
+      channel: { send: vi.fn(async () => ({})) },
+      message: { components: [], embeds: [claimedEmbed] },
+    };
+    await handleClaim(i, ctx, ticket({ claimedById: "staff1" }));
+    const payload = i.update.mock.calls[0][0];
+    const fields = payload.embeds[0].data.fields ?? [];
+    expect(fields.find((f) => f.name === "Claimed by")).toBeUndefined();
   });
 });
 
