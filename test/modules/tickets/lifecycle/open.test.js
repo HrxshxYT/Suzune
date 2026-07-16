@@ -28,11 +28,15 @@ describe("createTicketChannel", () => {
     return {
       guildId: "g1",
       user: { id: "u1" },
+      deferred: false,
+      replied: false,
       guild: {
         roles: { everyone: { id: "everyone" } },
         members: { me: { permissions: { has: () => true } } },
         channels: { create: vi.fn(async () => created) },
       },
+      deferReply: vi.fn(async function () { this.deferred = true; return {}; }),
+      editReply: vi.fn(async () => ({})),
       reply: vi.fn(async () => ({})),
       _created: created,
     };
@@ -49,7 +53,8 @@ describe("createTicketChannel", () => {
     };
     await createTicketChannel({ interaction: i, ctx, panelId: "p1", category, reason: null });
     expect(i.guild.channels.create).not.toHaveBeenCalled();
-    expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+    expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(i.editReply).toHaveBeenCalled();
   });
 
   it("creates a channel + ticket row and posts the welcome", async () => {
@@ -71,7 +76,8 @@ describe("createTicketChannel", () => {
       expect.objectContaining({ guildId: "g1", categoryId: "c1", openerId: "u1", channelId: "chan1", reason: "help me" }),
     );
     expect(i._created.send).toHaveBeenCalled();
-    expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+    expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(i.editReply).toHaveBeenCalled();
   });
 
   it("blocks opening when the bot lacks Manage Roles even with Manage Channels", async () => {
@@ -88,6 +94,7 @@ describe("createTicketChannel", () => {
     };
     await createTicketChannel({ interaction: i, ctx, panelId: "p1", category, reason: null });
     expect(i.guild.channels.create).not.toHaveBeenCalled();
-    expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+    expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(i.editReply).toHaveBeenCalled();
   });
 });

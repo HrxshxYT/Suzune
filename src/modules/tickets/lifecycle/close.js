@@ -25,6 +25,7 @@ export async function handleClose(interaction, ctx, ticket) {
 }
 
 export async function handleCloseConfirm(interaction, ctx, ticket) {
+  await interaction.deferUpdate().catch(() => {});
   const channel = await interaction.guild.channels.fetch(ticket.channelId).catch(() => null);
   await ctx.tickets.setStatus(ticket.id, "archived");
   if (channel) {
@@ -33,10 +34,11 @@ export async function handleCloseConfirm(interaction, ctx, ticket) {
     const controlMsg = await findControlMessage(channel);
     if (controlMsg) await controlMsg.edit({ components: [archivedControls(ticket.id)] }).catch(() => {});
   }
-  await interaction.update({ embeds: [successEmbed("Ticket archived.")], components: [] }).catch(() => {});
+  await interaction.editReply({ embeds: [successEmbed("Ticket archived.")], components: [] }).catch(() => {});
 }
 
 export async function handleReopen(interaction, ctx, ticket) {
+  await interaction.deferUpdate().catch(() => {});
   const channel = await interaction.guild.channels.fetch(ticket.channelId).catch(() => null);
   await ctx.tickets.setStatus(ticket.id, "open");
   if (channel) {
@@ -51,20 +53,22 @@ export async function handleReopen(interaction, ctx, ticket) {
     const controlMsg = await findControlMessage(channel);
     if (controlMsg) await controlMsg.edit({ components: [inTicketControls(ticket.id)] }).catch(() => {});
   }
-  await interaction.update({ components: [inTicketControls(ticket.id)] }).catch(() => {});
+  await interaction.editReply({ components: [inTicketControls(ticket.id)] }).catch(() => {});
 }
 
 export async function handleTranscript(interaction, ctx, ticket) {
+  await interaction.deferReply({ ephemeral: true }).catch(() => {});
   const category = await ctx.tickets.getCategory(ticket.categoryId).catch(() => null);
   const { buffer, filename } = await buildTranscript(interaction.channel, {
     number: ticket.number,
     categoryLabel: category?.label,
     openerTag: ticket.openerId,
   });
-  await interaction.reply({ files: [new AttachmentBuilder(buffer, { name: filename })], ephemeral: true });
+  await interaction.editReply({ files: [new AttachmentBuilder(buffer, { name: filename })] });
 }
 
 export async function handleDelete(interaction, ctx, ticket) {
+  await interaction.deferReply({ ephemeral: true }).catch(() => {});
   const config = await ctx.tickets.getConfig(interaction.guildId);
   const category = await ctx.tickets.getCategory(ticket.categoryId).catch(() => null);
   const { buffer, filename } = await buildTranscript(interaction.channel, {
@@ -84,7 +88,7 @@ export async function handleDelete(interaction, ctx, ticket) {
   }
 
   await ctx.tickets.setStatus(ticket.id, "closed", new Date());
-  await interaction.reply({ embeds: [successEmbed("Deleting…")], ephemeral: true }).catch(() => {});
+  await interaction.editReply({ embeds: [successEmbed("Deleting…")] }).catch(() => {});
   const channel = await interaction.guild.channels.fetch(ticket.channelId).catch(() => null);
   if (channel) await channel.delete("Ticket closed").catch(() => {});
 }

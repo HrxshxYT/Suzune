@@ -29,14 +29,20 @@ async function promptModal(i, modalId, title, rows) {
   const modal = new ModalBuilder().setCustomId(modalId).setTitle(title);
   modal.addComponents(...rows);
   await i.showModal(modal);
+  let sub;
   try {
-    return await i.awaitModalSubmit({
+    sub = await i.awaitModalSubmit({
       time: 120000,
       filter: (m) => m.customId === modalId && m.user.id === i.user.id,
     });
   } catch {
     return null;
   }
+  // Ack the modal submit within Discord's 3s window BEFORE any DB work, so a
+  // slow round-trip can't expire the interaction (error 10062). Callers then
+  // use sub.editReply() to update the panel message.
+  await sub.deferUpdate().catch(() => {});
+  return sub;
 }
 
 export async function handleTicketsComponent(i, state, ctx, render) {
@@ -70,7 +76,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
       const n = Math.max(0, Math.min(50, parseInt(sub.fields.getTextInputValue("n"), 10) || 0));
       await ctx.tickets.updateConfig(state.guildId, { maxOpenPerUser: n });
       state.config.maxOpenPerUser = n;
-      await sub.update(render());
+      await sub.editReply(render());
       return "handled";
     }
 
@@ -87,7 +93,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
       await reloadPanels(state, ctx);
       state.view = "panel";
       state.selectedPanelId = panel.id;
-      await sub.update(render());
+      await sub.editReply(render());
       return "handled";
     }
 
@@ -114,7 +120,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
         description: sub.fields.getTextInputValue("description"),
       });
       await reloadPanels(state, ctx);
-      await sub.update(render());
+      await sub.editReply(render());
       return "handled";
     }
 
@@ -140,7 +146,7 @@ export async function handleTicketsComponent(i, state, ctx, render) {
         reasonPrompt: reasonPrompt || null,
       });
       await reloadPanels(state, ctx);
-      await sub.update(render());
+      await sub.editReply(render());
       return "handled";
     }
 
@@ -152,8 +158,9 @@ export async function handleTicketsComponent(i, state, ctx, render) {
       return publishPanel(i, state, ctx, render);
 
     case "delpanel": {
-      await ctx.tickets.deletePanel(state.selectedPanelId);
-      await reloadPanels(state, ctx);
+      const deletedId = state.selectedPanelId;
+      await ctx.tickets.deletePanel(deletedId);
+      state.panels = state.panels.filter((p) => p.id !== deletedId);
       state.view = "home";
       state.selectedPanelId = null;
       return "update";
@@ -184,14 +191,16 @@ async function categoryEditor(i, state, ctx, render) {
     welcomeMessage: sub.fields.getTextInputValue("welcomeMessage"),
   });
   await reloadPanels(state, ctx);
-  await sub.update(render());
+  await sub.editReply(render());
   return "handled";
 }
 
 async function publishPanel(i, state, ctx, _render) {
+  // Ack before the DB reads + channel fetch/post below (error 10062 otherwise).
+  await i.deferReply({ ephemeral: true }).catch(() => {});
   const panel = await ctx.tickets.getPanel(state.selectedPanelId);
   if (!panel || (panel.categories?.length ?? 0) === 0) {
-    await i.reply({ embeds: [errorEmbed("Add at least one category before publishing.")], ephemeral: true });
+    await i.editReply({ embeds: [errorEmbed("Add at least one category before publishing.")] });
     return "handled";
   }
   const payload = buildPublishedPanel(panel);
@@ -209,6 +218,6 @@ async function publishPanel(i, state, ctx, _render) {
   }
   await ctx.tickets.setPublished(panel.id, target.id, message.id);
   await reloadPanels(state, ctx);
-  await i.reply({ embeds: [successEmbed(`Published to <#${target.id}>.`)], ephemeral: true });
+  await i.editReply({ embeds: [successEmbed(`Published to <#${target.id}>.`)] });
   return "handled";
 }

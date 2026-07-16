@@ -72,8 +72,14 @@ export async function handleTicketInteraction(interaction, ctx) {
     }
   } catch (err) {
     ctx.logger?.error({ err, kind }, "ticket interaction failed");
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ embeds: [errorEmbed("Something went wrong handling that.")], ephemeral: true }).catch(() => {});
+    const embeds = [errorEmbed("Something went wrong handling that.")];
+    // Handlers defer up front, so on a later throw the interaction is usually
+    // already acked — follow up with a fresh ephemeral rather than trying to
+    // (double-)reply, which would itself throw.
+    if (interaction.deferred || interaction.replied) {
+      await interaction.followUp({ embeds, ephemeral: true }).catch(() => {});
+    } else {
+      await interaction.reply({ embeds, ephemeral: true }).catch(() => {});
     }
   }
 }

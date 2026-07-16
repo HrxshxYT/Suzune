@@ -8,15 +8,15 @@ const ticket = (over = {}) => ({ id: "t1", claimedById: null, channelId: "chan1"
 describe("handleClaim", () => {
   it("claims for the caller when unclaimed (no embed on the message)", async () => {
     const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
-    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
+    const i = { user: { id: "staff1" }, deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
     await handleClaim(i, ctx, ticket());
     expect(ctx.tickets.setClaim).toHaveBeenCalledWith("t1", "staff1");
-    expect(i.update).toHaveBeenCalledWith({ components: [] });
+    expect(i.editReply).toHaveBeenCalledWith({ components: [] });
   });
 
   it("unclaims when the current claimer clicks again", async () => {
     const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
-    const i = { user: { id: "staff1" }, update: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
+    const i = { user: { id: "staff1" }, deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})), channel: { send: vi.fn(async () => ({})) }, message: { components: [], embeds: [] } };
     await handleClaim(i, ctx, ticket({ claimedById: "staff1" }));
     expect(ctx.tickets.setClaim).toHaveBeenCalledWith("t1", null);
   });
@@ -25,13 +25,13 @@ describe("handleClaim", () => {
     const ctx = { tickets: { setClaim: vi.fn(async () => ({})) } };
     const i = {
       user: { id: "staff1" },
-      update: vi.fn(async () => ({})),
+      deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})),
       channel: { send: vi.fn(async () => ({})) },
       message: { components: [], embeds: [new EmbedBuilder().setTitle("Ticket #1").toJSON()] },
     };
     await handleClaim(i, ctx, ticket());
-    expect(i.update).toHaveBeenCalledTimes(1);
-    const payload = i.update.mock.calls[0][0];
+    expect(i.editReply).toHaveBeenCalledTimes(1);
+    const payload = i.editReply.mock.calls[0][0];
     expect(payload.embeds).toHaveLength(1);
     const fields = payload.embeds[0].data.fields;
     expect(fields).toEqual(expect.arrayContaining([
@@ -47,12 +47,12 @@ describe("handleClaim", () => {
       .toJSON();
     const i = {
       user: { id: "staff1" },
-      update: vi.fn(async () => ({})),
+      deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})),
       channel: { send: vi.fn(async () => ({})) },
       message: { components: [], embeds: [claimedEmbed] },
     };
     await handleClaim(i, ctx, ticket({ claimedById: "staff1" }));
-    const payload = i.update.mock.calls[0][0];
+    const payload = i.editReply.mock.calls[0][0];
     const fields = payload.embeds[0].data.fields ?? [];
     expect(fields.find((f) => f.name === "Claimed by")).toBeUndefined();
   });
@@ -80,13 +80,13 @@ describe("handleMemberPick", () => {
   }
   it("adds an overwrite when the user has none", async () => {
     const channel = chan(undefined);
-    const i = { values: ["u9"], guild: { channels: { fetch: vi.fn(async () => channel) } }, update: vi.fn(async () => ({})), reply: vi.fn(async () => ({})) };
+    const i = { values: ["u9"], guild: { channels: { fetch: vi.fn(async () => channel) } }, deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})), reply: vi.fn(async () => ({})) };
     await handleMemberPick(i, {}, ticket());
     expect(channel.permissionOverwrites.edit).toHaveBeenCalled();
   });
   it("removes the overwrite when the user already has one", async () => {
     const channel = chan({ id: "u9" });
-    const i = { values: ["u9"], guild: { channels: { fetch: vi.fn(async () => channel) } }, update: vi.fn(async () => ({})), reply: vi.fn(async () => ({})) };
+    const i = { values: ["u9"], guild: { channels: { fetch: vi.fn(async () => channel) } }, deferUpdate: vi.fn(async () => ({})), editReply: vi.fn(async () => ({})), reply: vi.fn(async () => ({})) };
     await handleMemberPick(i, {}, ticket());
     expect(channel.permissionOverwrites.delete).toHaveBeenCalledWith("u9");
   });

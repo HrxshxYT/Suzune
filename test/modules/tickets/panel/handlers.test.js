@@ -64,7 +64,8 @@ describe("handleTicketsComponent", () => {
       const s = baseState();
       const sub = {
         fields: { getTextInputValue: (name) => (name === "n" ? "5" : "") },
-        update: vi.fn(async () => {}),
+        deferUpdate: vi.fn(async () => {}),
+        editReply: vi.fn(async () => {}),
       };
       const i = {
         customId: "tk:maxopen:o1",
@@ -76,7 +77,7 @@ describe("handleTicketsComponent", () => {
       expect(dir).toBe("handled");
       expect(c.tickets.updateConfig).toHaveBeenCalledWith("g1", { maxOpenPerUser: 5 });
       expect(s.config.maxOpenPerUser).toBe(5);
-      expect(sub.update).toHaveBeenCalled();
+      expect(sub.editReply).toHaveBeenCalled();
     });
 
     it("timeout: awaitModalSubmit rejects, returns handled without throwing", async () => {
@@ -101,7 +102,8 @@ describe("handleTicketsComponent", () => {
       const s = baseState({ panels: [] });
       const sub = {
         fields: { getTextInputValue: (name) => (name === "name" ? "New Panel" : "") },
-        update: vi.fn(async () => {}),
+        deferUpdate: vi.fn(async () => {}),
+        editReply: vi.fn(async () => {}),
       };
       const i = {
         customId: "tk:newpanel:o1",
@@ -114,7 +116,7 @@ describe("handleTicketsComponent", () => {
       expect(c.tickets.createPanel).toHaveBeenCalledWith("g1", { name: "New Panel" });
       expect(s.view).toBe("panel");
       expect(s.selectedPanelId).toBe("p2");
-      expect(sub.update).toHaveBeenCalled();
+      expect(sub.editReply).toHaveBeenCalled();
     });
   });
 
@@ -125,12 +127,14 @@ describe("handleTicketsComponent", () => {
       const i = {
         customId: "tk:publish:o1",
         user: { id: "o1" },
+        deferReply: vi.fn(async () => {}),
+        editReply: vi.fn(async () => {}),
         reply: vi.fn(async () => {}),
       };
       const dir = await handleTicketsComponent(i, s, c, render);
       expect(dir).toBe("handled");
-      expect(i.reply).toHaveBeenCalledTimes(1);
-      expect(i.reply.mock.calls[0][0]).toMatchObject({ ephemeral: true });
+      expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+      expect(i.editReply).toHaveBeenCalledTimes(1);
       expect(c.tickets.setPublished).not.toHaveBeenCalled();
     });
 
@@ -150,13 +154,15 @@ describe("handleTicketsComponent", () => {
         customId: "tk:publish:o1",
         user: { id: "o1" },
         channel: { id: "c1", send: vi.fn(async () => sentMessage) },
+        deferReply: vi.fn(async () => {}),
+        editReply: vi.fn(async () => {}),
         reply: vi.fn(async () => {}),
       };
       const dir = await handleTicketsComponent(i, s, c, render);
       expect(dir).toBe("handled");
       expect(i.channel.send).toHaveBeenCalledTimes(1);
       expect(c.tickets.setPublished).toHaveBeenCalledWith("p1", "c1", "msg1");
-      expect(i.reply).toHaveBeenCalledTimes(1);
+      expect(i.editReply).toHaveBeenCalledTimes(1);
     });
 
     it("re-publish: edits the existing message instead of sending a new one", async () => {
@@ -181,6 +187,8 @@ describe("handleTicketsComponent", () => {
         user: { id: "o1" },
         guild: { channels: { fetch: vi.fn(async () => fetchedChannel) } },
         channel: { id: "fallback", send: vi.fn(async () => ({ id: "shouldNotBeUsed2" })) },
+        deferReply: vi.fn(async () => {}),
+        editReply: vi.fn(async () => {}),
         reply: vi.fn(async () => {}),
       };
       const dir = await handleTicketsComponent(i, s, c, render);

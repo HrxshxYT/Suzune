@@ -14,21 +14,23 @@ export async function handleMembers(interaction, ctx, ticket) {
 
 export async function handleMemberPick(interaction, ctx, ticket) {
   const userId = interaction.values[0];
+  // Ack before the channel fetch/overwrite so slow calls can't expire the interaction.
+  await interaction.deferUpdate().catch(() => {});
   const channel = await interaction.guild.channels.fetch(ticket.channelId).catch(() => null);
   if (!channel) {
-    await interaction.update({ content: "This ticket channel no longer exists.", components: [] }).catch(() => {});
+    await interaction.editReply({ content: "This ticket channel no longer exists.", components: [] }).catch(() => {});
     return;
   }
   const existing = channel.permissionOverwrites.cache.get(userId);
   if (existing) {
     await channel.permissionOverwrites.delete(userId);
-    await interaction.update({ content: `Removed <@${userId}> from the ticket.`, components: [] }).catch(() => {});
+    await interaction.editReply({ content: `Removed <@${userId}> from the ticket.`, components: [] }).catch(() => {});
   } else {
     await channel.permissionOverwrites.edit(userId, {
       ViewChannel: true,
       SendMessages: true,
       ReadMessageHistory: true,
     });
-    await interaction.update({ content: `Added <@${userId}> to the ticket.`, components: [] }).catch(() => {});
+    await interaction.editReply({ content: `Added <@${userId}> to the ticket.`, components: [] }).catch(() => {});
   }
 }

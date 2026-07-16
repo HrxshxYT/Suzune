@@ -19,11 +19,14 @@ describe("isStaff", () => {
 describe("handleTicketInteraction", () => {
   it("routes the open select to the open handler path (no ticket load)", async () => {
     const ctx = { tickets: { getCategory: vi.fn(async () => ({ id: "c1", reasonPrompt: null, namePrefix: "t", welcomeMessage: "hi {mention}", staffRoleIds: [], discordCategoryId: null })), getConfig: vi.fn(async () => ({ maxOpenPerUser: 0 })), countOpenForUser: vi.fn(async () => 0), peekNextNumber: vi.fn(async () => 1), createTicket: vi.fn(async () => ({ id: "t1", number: 1, channelId: "c" })) }, logger: { error: vi.fn() } };
-    const created = { id: "c", send: vi.fn(async () => ({})) };
+    const created = { id: "c", name: "t-1", setName: vi.fn(async () => ({})), send: vi.fn(async () => ({})) };
     const i = {
       isMessageComponent: () => true, isModalSubmit: () => false, isStringSelectMenu: () => true,
       customId: "ticket:open:p1", values: ["c1"], user: { id: "u1" }, guildId: "g1",
+      deferred: false, replied: false,
       guild: { roles: { everyone: { id: "e" } }, members: { me: { permissions: perms(true) } }, channels: { create: vi.fn(async () => created) } },
+      deferReply: vi.fn(async function () { this.deferred = true; return {}; }),
+      editReply: vi.fn(async () => ({})),
       reply: vi.fn(async () => ({})),
     };
     await handleTicketInteraction(i, ctx);

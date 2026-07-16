@@ -68,13 +68,18 @@ export async function createTicketChannel({ interaction, ctx, panelId, category,
   const guild = interaction.guild;
   const openerId = interaction.user.id;
 
+  // Ack within Discord's 3s window before the DB reads + channel creation below;
+  // on a remote DB that work can otherwise expire the interaction (error 10062).
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ ephemeral: true }).catch(() => {});
+  }
+
   const config = await ctx.tickets.getConfig(interaction.guildId);
   if (config.maxOpenPerUser > 0) {
     const open = await ctx.tickets.countOpenForUser(interaction.guildId, openerId, category.id);
     if (open >= config.maxOpenPerUser) {
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [errorEmbed(`You already have ${open} open ${category.label} ticket(s).`)],
-        ephemeral: true,
       });
       return;
     }
@@ -82,7 +87,7 @@ export async function createTicketChannel({ interaction, ctx, panelId, category,
 
   const me = guild.members.me;
   if (me && (!me.permissions.has(PermissionFlagsBits.ManageChannels) || !me.permissions.has(PermissionFlagsBits.ManageRoles))) {
-    await interaction.reply({ embeds: [errorEmbed("I need the **Manage Channels** and **Manage Roles** permissions to open tickets.")], ephemeral: true });
+    await interaction.editReply({ embeds: [errorEmbed("I need the **Manage Channels** and **Manage Roles** permissions to open tickets.")] });
     return;
   }
 
@@ -109,7 +114,7 @@ export async function createTicketChannel({ interaction, ctx, panelId, category,
     });
   } catch (err) {
     ctx.logger?.error({ err }, "ticket channel create failed");
-    await interaction.reply({ embeds: [errorEmbed("Could not create the ticket channel (check my permissions and the parent category).")], ephemeral: true });
+    await interaction.editReply({ embeds: [errorEmbed("Could not create the ticket channel (check my permissions and the parent category).")] });
     return;
   }
 
@@ -133,5 +138,5 @@ export async function createTicketChannel({ interaction, ctx, panelId, category,
     .setDescription(renderWelcome(category.welcomeMessage, { openerId }) + (reason ? `\n\n**Reason:** ${reason}` : ""));
 
   await channel.send({ content: `<@${openerId}>`, embeds: [embed], components: [inTicketControls(ticket.id)] });
-  await interaction.reply({ embeds: [successEmbed(`Opened <#${channel.id}>.`)], ephemeral: true });
+  await interaction.editReply({ embeds: [successEmbed(`Opened <#${channel.id}>.`)] });
 }

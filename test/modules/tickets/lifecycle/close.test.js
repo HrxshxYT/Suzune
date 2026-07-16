@@ -37,7 +37,8 @@ describe("handleCloseConfirm", () => {
     const i = {
       guild: { channels: { fetch: vi.fn(async () => channel) } },
       message: { edit: vi.fn(async () => ({})) },
-      update: vi.fn(async () => ({})),
+      deferUpdate: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => ({})),
       channel,
     };
     await handleCloseConfirm(i, ctx, ticket());
@@ -63,7 +64,8 @@ describe("handleReopen", () => {
     };
     const i = {
       guild: { channels: { fetch: vi.fn(async () => channel) } },
-      update: vi.fn(async () => ({})),
+      deferUpdate: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => ({})),
       channel,
     };
     await handleReopen(i, ctx, ticket());
@@ -74,7 +76,7 @@ describe("handleReopen", () => {
       ReadMessageHistory: true,
     });
     expect(channel.setName).toHaveBeenCalledWith("support-1");
-    expect(i.update).toHaveBeenCalled();
+    expect(i.editReply).toHaveBeenCalled();
   });
 
   it("falls back to the 'ticket' prefix when no category/namePrefix is found", async () => {
@@ -92,7 +94,8 @@ describe("handleReopen", () => {
     };
     const i = {
       guild: { channels: { fetch: vi.fn(async () => channel) } },
-      update: vi.fn(async () => ({})),
+      deferUpdate: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => ({})),
       channel,
     };
     await handleReopen(i, ctx, ticket());
@@ -109,12 +112,13 @@ describe("handleTranscript", () => {
     };
     const i = {
       channel,
-      reply: vi.fn(async () => ({})),
+      deferReply: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => ({})),
     };
     await handleTranscript(i, ctx, ticket());
     expect(ctx.tickets.getCategory).toHaveBeenCalledWith("c1");
-    const payload = i.reply.mock.calls[0][0];
-    expect(payload.ephemeral).toBe(true);
+    expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    const payload = i.editReply.mock.calls[0][0];
     expect(payload.files).toHaveLength(1);
   });
 });
@@ -136,7 +140,8 @@ describe("handleDelete", () => {
       guildId: "g1",
       guild: { channels: { fetch: vi.fn(async (id) => (id === "tc1" ? transcriptChannel : ticketChannel)) } },
       channel: ticketChannel,
-      reply: vi.fn(async () => ({})),
+      deferReply: vi.fn(async () => ({})),
+      editReply: vi.fn(async () => ({})),
     };
     await handleDelete(i, ctx, ticket());
     expect(transcriptChannel.send).toHaveBeenCalled();

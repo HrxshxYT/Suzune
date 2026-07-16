@@ -4,8 +4,12 @@ export async function handleClaim(interaction, ctx, ticket) {
   const caller = interaction.user.id;
   const unclaiming = ticket.claimedById === caller;
   const next = unclaiming ? null : caller;
+
+  // Ack before the DB write so a slow round-trip can't expire the interaction.
+  await interaction.deferUpdate().catch(() => {});
   await ctx.tickets.setClaim(ticket.id, next);
 
+  const payload = { components: interaction.message.components };
   const existingEmbed = interaction.message.embeds?.[0];
   if (existingEmbed) {
     const rebuilt = EmbedBuilder.from(existingEmbed);
@@ -14,10 +18,9 @@ export async function handleClaim(interaction, ctx, ticket) {
       fields.push({ name: "Claimed by", value: `<@${caller}>`, inline: true });
     }
     rebuilt.setFields(fields);
-    await interaction.update({ embeds: [rebuilt], components: interaction.message.components }).catch(() => {});
-  } else {
-    await interaction.update({ components: interaction.message.components }).catch(() => {});
+    payload.embeds = [rebuilt];
   }
+  await interaction.editReply(payload).catch(() => {});
 
   await interaction.channel.send(
     unclaiming ? `Ticket released by <@${caller}>.` : `Ticket claimed by <@${caller}>.`,
