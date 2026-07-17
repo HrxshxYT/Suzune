@@ -110,7 +110,7 @@ export async function startBot() {
     leveling: new LevelingService(prisma),
     tickets: new TicketService(prisma),
     watchvc: new WatchVcService({ client, logger, config, deps: watchVcDeps(client) }),
-    dashboards: new DashboardService({ logger }),
+    dashboards: new DashboardService({ logger, prisma, refreshMs: 90_000 }),
   };
 
   bindEvents(client, listeners, context);

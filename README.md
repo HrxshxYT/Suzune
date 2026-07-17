@@ -115,10 +115,11 @@ risk, channels, privileged users, threat users, integrations, webhook assets, an
 The card is tinted by the tier so it reads as an index at a glance; threat metrics turn red when
 non-zero.
 
-- `/dashboard` — posts a **live** dashboard that regenerates its card and **refreshes every 5
-  seconds** (a bounded, self-cleaning loop that stops when the message is deleted). Shows which
-  protections are enabled (Anti-Nuke, Anti-Raid, Auto-Mod, Auto-Revert, Panic Mode, Mod Logging)
-  and the member count.
+- `/dashboard` — posts a **live** dashboard that regenerates its card and **refreshes every 1.5
+  minutes** (a rate-limit-friendly cadence). The loop **keeps running until the message is
+  deleted** and is **persisted**, so it is automatically restored after a bot restart; transient
+  Discord errors are retried rather than ending the loop. Shows which protections are enabled
+  (Anti-Nuke, Anti-Raid, Auto-Mod, Auto-Revert, Panic Mode, Mod Logging) and the member count.
 - `/scan` — runs a **deep, one-shot security audit** and returns a graded report (A+ → F). It
   detects **threats and broken roles**: disabled protections, dangerous `@everyone` permissions,
   un-vouched administrators, unmanaged admin roles, privileged roles ranked **above the bot** (which

@@ -29,6 +29,19 @@ model Guild {
   ticketPanels  TicketPanel[]
   tickets       Ticket[]
   ticketCounter TicketCounter?
+  dashboards    Dashboard[]
+}
+
+// A live /dashboard message that keeps refreshing until deleted. Persisted so
+// the refresh loop can be restored after a bot restart.
+model Dashboard {
+  id        String   @id // Discord message id
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId String
+  createdAt DateTime @default(now())
+
+  @@index([guildId])
 }
 
 model AntinukeConfig {
