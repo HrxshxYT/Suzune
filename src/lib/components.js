@@ -1,5 +1,14 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+} from "discord.js";
 import { EMOJIS } from "./constants.js";
+
+// Discord allows at most 25 options in a string select menu.
+const SELECT_MAX = 25;
 
 export function paginate(items, pageSize) {
   const pages = [];
@@ -64,4 +73,48 @@ export function toggleRow(items, ownerId) {
 
 export function ownerFilter(interaction, ownerId) {
   return interaction.user?.id === ownerId;
+}
+
+// Help category picker: a "🏠 Home" option plus one per category. `selected` is the
+// active category name (falsy → Home is default). Clamped to Discord's option cap.
+export function categorySelectRow({ categories, selected, ownerId }) {
+  const options = [
+    new StringSelectMenuOptionBuilder()
+      .setLabel("🏠 Home")
+      .setValue("home")
+      .setDescription("Overview of every category")
+      .setDefault(!selected),
+    ...categories.map((cat) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(cat.name.toUpperCase().slice(0, 100))
+        .setValue(cat.name)
+        .setDescription(`${cat.count} command${cat.count === 1 ? "" : "s"}`.slice(0, 100))
+        .setDefault(cat.name === selected),
+    ),
+  ].slice(0, SELECT_MAX);
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`help:cat:${ownerId}`)
+    .setPlaceholder("Pick a category…")
+    .addOptions(options);
+  return new ActionRowBuilder().addComponents(menu);
+}
+
+// Help command picker: one option per command in the current category. `selected` is
+// the active command name. Clamped to Discord's option cap.
+export function commandSelectRow({ commands, selected, ownerId }) {
+  const options = commands
+    .slice(0, SELECT_MAX)
+    .map((name) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(`/${name}`.slice(0, 100))
+        .setValue(name)
+        .setDefault(name === selected),
+    );
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`help:cmd:${ownerId}`)
+    .setPlaceholder("Pick a command for details")
+    .addOptions(options);
+  return new ActionRowBuilder().addComponents(menu);
 }

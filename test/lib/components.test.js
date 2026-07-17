@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { paginate, pageRow, confirmRow, toggleRow, ownerFilter } from "../../src/lib/components.js";
+import {
+  paginate,
+  pageRow,
+  confirmRow,
+  toggleRow,
+  ownerFilter,
+  categorySelectRow,
+  commandSelectRow,
+} from "../../src/lib/components.js";
 
 describe("paginate", () => {
   it("chunks items into pages", () => {
@@ -53,5 +61,54 @@ describe("ownerFilter", () => {
   it("passes only the owner", () => {
     expect(ownerFilter({ user: { id: "u1" } }, "u1")).toBe(true);
     expect(ownerFilter({ user: { id: "u2" } }, "u1")).toBe(false);
+  });
+});
+
+describe("categorySelectRow", () => {
+  it("builds a Home option plus one per category, marking the selected one default", () => {
+    const menu = categorySelectRow({
+      categories: [{ name: "moderation", count: 2 }, { name: "util", count: 1 }],
+      selected: "util",
+      ownerId: "u1",
+    }).toJSON().components[0];
+    expect(menu.custom_id).toBe("help:cat:u1");
+    expect(menu.options.map((o) => o.value)).toEqual(["home", "moderation", "util"]);
+    expect(menu.options.find((o) => o.value === "util").default).toBe(true);
+    expect(menu.options[0].default).toBe(false);
+  });
+
+  it("marks Home default when nothing is selected", () => {
+    const menu = categorySelectRow({
+      categories: [{ name: "util", count: 1 }],
+      ownerId: "u1",
+    }).toJSON().components[0];
+    expect(menu.options[0].value).toBe("home");
+    expect(menu.options[0].default).toBe(true);
+  });
+
+  it("clamps to Discord's 25-option maximum", () => {
+    const categories = Array.from({ length: 40 }, (_, i) => ({ name: `c${i}`, count: 1 }));
+    const menu = categorySelectRow({ categories, ownerId: "u1" }).toJSON().components[0];
+    expect(menu.options.length).toBe(25);
+  });
+});
+
+describe("commandSelectRow", () => {
+  it("builds one option per command, marking the selected one default", () => {
+    const menu = commandSelectRow({
+      commands: ["ban", "kick"],
+      selected: "kick",
+      ownerId: "u1",
+    }).toJSON().components[0];
+    expect(menu.custom_id).toBe("help:cmd:u1");
+    expect(menu.options.map((o) => o.value)).toEqual(["ban", "kick"]);
+    expect(menu.options.find((o) => o.value === "kick").default).toBe(true);
+    expect(menu.placeholder).toBeTruthy();
+  });
+
+  it("clamps to 25 options", () => {
+    const commands = Array.from({ length: 40 }, (_, i) => `c${i}`);
+    const menu = commandSelectRow({ commands, ownerId: "u1" }).toJSON().components[0];
+    expect(menu.options.length).toBe(25);
   });
 });
