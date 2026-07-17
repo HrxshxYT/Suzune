@@ -40,8 +40,10 @@ function isFatal(err) {
 async function spawnWithRetry() {
   for (let attempt = 1; ; attempt++) {
     try {
-      await manager.spawn();
-      console.log("All shards spawned.");
+      // timeout: Infinity — don't reject while a shard is still connecting; the
+      // shard retries its own login (see loginWithRetry in bot.js).
+      await manager.spawn({ timeout: Infinity });
+      console.log("All shards launched.");
       return;
     } catch (err) {
       if (isFatal(err)) {

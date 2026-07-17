@@ -27,6 +27,36 @@ import { WatchVcService } from "./modules/watchvc/WatchVcService.js";
 import { realDeps as watchVcDeps } from "./modules/watchvc/deps.js";
 import { DashboardService } from "./modules/dashboard/DashboardService.js";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A bad token or forbidden bot won't fix itself; a Discord 5xx will.
+function isFatalLogin(err) {
+  const status = err?.status ?? err?.httpStatus;
+  return err?.code === "TokenInvalid" || status === 401 || status === 403;
+}
+
+// client.login() fetches gateway info from Discord; that call can return a
+// transient 500, which used to crash the shard (process.exit(1)) and — because
+// the manager auto-respawns — spin into a restart loop. Retry with capped
+// backoff so a Discord hiccup self-heals; only genuine auth errors abort.
+export async function loginWithRetry(client, token, logger) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await client.login(token);
+      return;
+    } catch (err) {
+      if (isFatalLogin(err)) throw err;
+      const status = err?.status ?? err?.httpStatus;
+      const delayMs = Math.min(60_000, 5_000 * 2 ** Math.min(attempt - 1, 4));
+      logger?.warn?.(
+        { attempt, status, err: err?.message ?? String(err) },
+        "login failed (transient); retrying",
+      );
+      await sleep(delayMs);
+    }
+  }
+}
+
 export async function startBot() {
   const env = loadEnv();
   const logger = createLogger({ level: env.logLevel, pretty: env.nodeEnv !== "production" });
@@ -86,11 +116,11 @@ export async function startBot() {
   bindEvents(client, listeners, context);
   registerExpiryJob(context);
   registerModLogListener(context);
-  client.once("ready", (c) => 
+  client.once("ready", (c) =>
     logger.info(`Logged in as ${c.user.tag} (shard ready)`));
 
 
-  await client.login(env.token);
+  await loginWithRetry(client, env.token, logger);
 
   const pingSampler = setInterval(() => context.pingHistory.push(client.ws.ping), 10_000);
   pingSampler.unref?.();
