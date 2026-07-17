@@ -5,7 +5,7 @@ import { renderChapter, chapterCount } from "../tutorial.js";
 export default {
   data: new SlashCommandBuilder()
     .setName("tutorial")
-    .setDescription("An interactive walkthrough of how Joint Jagadeesan works."),
+    .setDescription("An interactive walkthrough of how Suzune works."),
   permissions: [],
   async execute(interaction, ctx) {
     await runPager({

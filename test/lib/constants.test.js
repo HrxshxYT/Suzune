@@ -14,6 +14,6 @@ describe("theme constants", () => {
     expect(EMOJIS.success).toBe("✅");
     expect(EMOJIS.on).toBe("🟢");
     expect(EMOJIS.off).toBe("🔴");
-    expect(BOT_NAME).toBe("Joint Jagadeesan");
+    expect(BOT_NAME).toBe("Suzune");
   });
 });

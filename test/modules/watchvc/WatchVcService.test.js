@@ -48,7 +48,7 @@ describe("WatchVcService.enable", () => {
     expect(res.ok).toBe(true);
     expect(ch.permissionOverwrites.set).toHaveBeenCalled();
     expect(deps.join).toHaveBeenCalledWith(ch);
-    expect(deps.setStatus).toHaveBeenCalledWith("c1", "🛡️ Guarding 42 members");
+    expect(deps.setStatus).toHaveBeenCalledWith("c1", "🛡️ Protecting 42 members");
     expect(config.updateWatchVc).toHaveBeenCalledWith("g1", { channelId: "c1", enabled: true });
     expect(svc.currentChannelId("g1")).toBe("c1");
   });
@@ -92,7 +92,7 @@ describe("WatchVcService.refreshStatus", () => {
     expect(deps.setStatus).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1000);
     expect(deps.setStatus).toHaveBeenCalledTimes(1);
-    expect(deps.setStatus).toHaveBeenCalledWith("c1", "🛡️ Guarding 99 members");
+    expect(deps.setStatus).toHaveBeenCalledWith("c1", "🛡️ Protecting 99 members");
     vi.useRealTimers();
   });
 });

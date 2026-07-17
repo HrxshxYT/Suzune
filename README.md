@@ -1,8 +1,8 @@
-# Joint Jagadeesan
+# Suzune
 
 Public, multi-server, all-in-one Discord bot — security, moderation, logging, and configuration.
 
-> The bot's **display name** ("Joint Jagadeesan") is set in the Discord Developer Portal; this repo
+> The bot's **display name** ("Suzune") is set in the Discord Developer Portal; this repo
 > folder name is cosmetic and can stay as-is.
 
 ## Setup

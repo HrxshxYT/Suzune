@@ -1,4 +1,4 @@
-export const BOT_NAME = "Joint Jagadeesan";
+export const BOT_NAME = "Suzune";
 
 export const COLORS = {
   brand: 0x2ecc71,

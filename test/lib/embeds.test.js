@@ -30,7 +30,7 @@ describe("branded styling", () => {
   it("success is green with a checkmark and branded footer + timestamp", () => {
     const e = successEmbed("done").toJSON();
     expect(e.color).toBe(COLORS.success);
-    expect(e.footer.text).toBe("Joint Jagadeesan");
+    expect(e.footer.text).toBe("Suzune");
     expect(e.timestamp).toBeTruthy();
   });
   it("warn stays amber", () => {

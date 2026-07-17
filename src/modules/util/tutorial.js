@@ -5,7 +5,7 @@ export const TUTORIAL_CHAPTERS = [
   {
     title: `${EMOJIS.book} Getting Started`,
     body:
-      "Welcome to **Joint Jagadeesan** — an all-in-one moderation, security, and community bot.\n\n" +
+      "Welcome to **Suzune** — an all-in-one moderation, security, and community bot.\n\n" +
       "**First steps**\n" +
       "• Make sure my role sits **near the top** of your role list — I can't action members above me.\n" +
       "• Run `/config view` to see your server settings.\n" +
@@ -84,7 +84,7 @@ export const TUTORIAL_CHAPTERS = [
       "• `/help` lists every command; `/help <command>` explains one.\n" +
       "• Most config commands need **Administrator**; moderation needs the matching permission or a mod role.\n" +
       "• Buttons are usable only by the person who ran the command, and expire after a few minutes — just re-run the command to get fresh controls.\n\n" +
-      "That's the tour — enjoy Joint Jagadeesan! 🎉",
+      "That's the tour — enjoy Suzune! 🎉",
   },
 ];
 

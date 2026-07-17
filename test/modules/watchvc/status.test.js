@@ -3,8 +3,8 @@ import { formatGuardStatus, createDebouncer } from "../../../src/modules/watchvc
 
 describe("formatGuardStatus", () => {
   it("formats the guard badge", () => {
-    expect(formatGuardStatus(1234)).toBe("🛡️ Guarding 1234 members");
-    expect(formatGuardStatus(1)).toBe("🛡️ Guarding 1 members");
+    expect(formatGuardStatus(1234)).toBe("🛡️ Protecting 1234 members");
+    expect(formatGuardStatus(1)).toBe("🛡️ Protecting 1 members");
   });
 });
 
