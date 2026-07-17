@@ -12,6 +12,15 @@ const schema = z.object({
   // to auto-detect spawned shards, which would crash a standalone Client with "auto".
   BOT_SHARD_COUNT: shardCount,
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  // Optional Lavalink node — music stays disabled when LAVALINK_HOST is unset.
+  LAVALINK_HOST: z.string().min(1).optional(),
+  LAVALINK_PORT: z.coerce.number().int().positive().default(2333),
+  LAVALINK_PASSWORD: z.string().default(""),
+  // z.coerce.boolean() treats "false" as true; parse the string explicitly.
+  LAVALINK_SECURE: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 export function loadEnv(raw = process.env) {
@@ -29,5 +38,13 @@ export function loadEnv(raw = process.env) {
     devGuildId: e.DEV_GUILD_ID,
     shardCount: e.BOT_SHARD_COUNT,
     logLevel: e.LOG_LEVEL,
+    lavalink: e.LAVALINK_HOST
+      ? {
+          host: e.LAVALINK_HOST,
+          port: e.LAVALINK_PORT,
+          password: e.LAVALINK_PASSWORD,
+          secure: e.LAVALINK_SECURE,
+        }
+      : null,
   };
 }

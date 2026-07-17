@@ -31,4 +31,34 @@ describe("loadEnv", () => {
   it("throws when a required var is missing", () => {
     expect(() => loadEnv({ DISCORD_TOKEN: "t" })).toThrow(/DISCORD_CLIENT_ID|DATABASE_URL/);
   });
+
+  it("leaves lavalink null when LAVALINK_HOST is absent", () => {
+    expect(loadEnv(base).lavalink).toBe(null);
+  });
+
+  it("parses lavalink config when a host is present", () => {
+    const env = loadEnv({
+      ...base,
+      LAVALINK_HOST: "node.example.com",
+      LAVALINK_PORT: "2333",
+      LAVALINK_PASSWORD: "secret",
+      LAVALINK_SECURE: "true",
+    });
+    expect(env.lavalink).toEqual({
+      host: "node.example.com",
+      port: 2333,
+      password: "secret",
+      secure: true,
+    });
+  });
+
+  it("defaults lavalink port to 2333 and secure to false", () => {
+    const env = loadEnv({ ...base, LAVALINK_HOST: "node.example.com" });
+    expect(env.lavalink).toEqual({
+      host: "node.example.com",
+      port: 2333,
+      password: "",
+      secure: false,
+    });
+  });
 });

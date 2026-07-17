@@ -1,12 +1,12 @@
 export const BOT_NAME = "Suzune";
 
 export const COLORS = {
-  brand: 0x2ecc71,
-  success: 0x57f287,
-  info: 0x2ecc71,
-  muted: 0x1f8b4c,
-  warn: 0xfee75c,
-  error: 0xed4245,
+  brand: 0x8b5cf6, // violet — matches the liquid-glass cards
+  success: 0x57f287, // green kept as a status cue
+  info: 0x8b5cf6,
+  muted: 0x6d5b9e, // muted violet
+  warn: 0xfee75c, // amber kept
+  error: 0xed4245, // red kept
 };
 
 export const EMOJIS = {
