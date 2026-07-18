@@ -1,10 +1,11 @@
-import { createCanvas } from "@napi-rs/canvas";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 import {
   GLASS,
   paintBackground,
   glassPanel,
   accentEdge,
   drawText,
+  ellipsize,
   roundRectPath,
   FONT,
 } from "../../lib/glassCard.js";
@@ -22,6 +23,43 @@ function pingColor(ping) {
   if (ping <= 150) return GLASS.good;
   if (ping <= 300) return GLASS.warn;
   return GLASS.danger;
+}
+
+// Draws a server's icon as a rounded square. Falls back to a glass tile with the
+// server's initial when no icon is set or the image fails to decode.
+async function drawServerIcon(ctx, server, x, y, size) {
+  const radius = 14;
+  let drawn = false;
+  if (server.iconPng) {
+    try {
+      const img = await loadImage(server.iconPng);
+      ctx.save();
+      roundRectPath(ctx, x, y, size, size, radius);
+      ctx.clip();
+      ctx.drawImage(img, x, y, size, size);
+      ctx.restore();
+      drawn = true;
+    } catch {
+      // fall through to the lettered placeholder
+    }
+  }
+  if (!drawn) {
+    roundRectPath(ctx, x, y, size, size, radius);
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fill();
+    const initial = (server.name?.trim()?.[0] ?? "?").toUpperCase();
+    drawText(ctx, initial, x + size / 2, y + size / 2 + 8, {
+      size: 22,
+      color: GLASS.accentSoft,
+      weight: "bold",
+      align: "center",
+    });
+  }
+  // Subtle glass border around the icon.
+  roundRectPath(ctx, x, y, size, size, radius);
+  ctx.strokeStyle = GLASS.panelBorder;
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
 
 // Lays out the command pills into rows that fit the given inner width.
@@ -51,8 +89,16 @@ function layoutPills(ctx, names, innerWidth, size = 16) {
 }
 
 // Renders the startup status report as a purple liquid-glass PNG: a header,
-// four headline stats, and every online command as a pill.
-export function buildStatusCard({ ping, commandCount, commandNames = [], guildCount, totalMembers }) {
+// four headline stats, the top servers the bot is in, and every online command
+// as a pill.
+export async function buildStatusCard({
+  ping,
+  commandCount,
+  commandNames = [],
+  guildCount,
+  totalMembers,
+  topServers = [],
+}) {
   // First measure the command pills to size the canvas.
   const measure = createCanvas(10, 10).getContext("2d");
   const innerW = W - 2 * P - 48;
@@ -60,10 +106,21 @@ export function buildStatusCard({ ping, commandCount, commandNames = [], guildCo
 
   const headerH = 96;
   const statsH = 120;
+
+  // Top-servers panel geometry.
+  const svHeaderH = 52;
+  const svRowH = 68;
+  const svRowCount = Math.max(topServers.length, 1);
+  const svBodyH = svRowCount * svRowH + 12;
+  const svPanelH = svHeaderH + svBodyH + 16;
+
   const cmdHeaderH = 52;
   const cmdBodyH = Math.max(rowH, rows.length * (rowH + 8)) + 8;
   const cmdPanelH = cmdHeaderH + cmdBodyH + 20;
-  const H = headerH + statsH + 24 + cmdPanelH + 60;
+
+  const svY = headerH + statsH + 24;
+  const cpY = svY + svPanelH + 24;
+  const H = cpY + cmdPanelH + 60;
 
   const accent = GLASS.accent;
   const canvas = createCanvas(W, H);
@@ -96,8 +153,53 @@ export function buildStatusCard({ ping, commandCount, commandNames = [], guildCo
     drawText(ctx, String(t.value), x + 24, tileY + 82, { size: 38, color: t.color, weight: "bold" });
   });
 
+  // Top-servers panel.
+  glassPanel(ctx, P, svY, W - 2 * P, svPanelH, { radius: 20 });
+  accentEdge(ctx, P + 14, svY + 16, 5, svPanelH - 32, accent);
+  drawText(ctx, `TOP SERVERS (${topServers.length})`, P + 28, svY + 38, {
+    size: 18,
+    color: GLASS.accentSoft,
+    weight: "bold",
+  });
+
+  const svRowsY = svY + svHeaderH + 8;
+  if (topServers.length === 0) {
+    drawText(ctx, "Not in any servers yet.", W / 2, svRowsY + 34, {
+      size: 16,
+      color: GLASS.muted,
+      align: "center",
+    });
+  } else {
+    const iconSize = 46;
+    const iconX = P + 28;
+    const textX = iconX + iconSize + 18;
+    const rankX = W - P - 24;
+    const nameMaxW = rankX - textX - 24;
+    for (let i = 0; i < topServers.length; i++) {
+      const s = topServers[i];
+      const rowTop = svRowsY + i * svRowH;
+      const iconY = rowTop + (svRowH - iconSize) / 2 - 4;
+      await drawServerIcon(ctx, s, iconX, iconY, iconSize);
+      drawText(ctx, ellipsize(ctx, s.name ?? "Unknown server", nameMaxW, 22, "bold"), textX, rowTop + 26, {
+        size: 22,
+        color: GLASS.text,
+        weight: "bold",
+      });
+      const sub = `Owner: ${s.ownerName ?? "Unknown"}  ·  ${formatCount(s.memberCount)} members`;
+      drawText(ctx, ellipsize(ctx, sub, nameMaxW, 15), textX, rowTop + 50, {
+        size: 15,
+        color: GLASS.label,
+      });
+      drawText(ctx, `#${i + 1}`, rankX, rowTop + 38, {
+        size: 22,
+        color: GLASS.accentSoft,
+        weight: "bold",
+        align: "right",
+      });
+    }
+  }
+
   // Commands panel.
-  const cpY = headerH + statsH + 24;
   const cpH = cmdPanelH;
   glassPanel(ctx, P, cpY, W - 2 * P, cpH, { radius: 20 });
   accentEdge(ctx, P + 14, cpY + 16, 5, cpH - 32, accent);
