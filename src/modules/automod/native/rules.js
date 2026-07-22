@@ -93,15 +93,23 @@ function toIdArray(value, max) {
   return arr.slice(0, max);
 }
 
-// The full create/edit payload for one rule key, drawn from the guild's config.
-export function buildRuleDefinition(key, cfg) {
+// The full create payload for one rule key, drawn from the guild's config. When
+// replacing an existing KeywordPreset rule, its presets are unioned with ours so
+// the server keeps any protection it already had.
+export function buildRuleDefinition(key, cfg, existingRule = null) {
   const def = RULE_DEFS[key];
   if (!def) return null;
+  const triggerMetadata = def.triggerMetadata(cfg);
+  if (def.triggerType === Trigger.KeywordPreset && existingRule?.triggerMetadata?.presets?.length) {
+    triggerMetadata.presets = [
+      ...new Set([...existingRule.triggerMetadata.presets, ...(triggerMetadata.presets ?? [])]),
+    ];
+  }
   return {
     name: def.name,
     eventType: Event.MessageSend,
     triggerType: def.triggerType,
-    triggerMetadata: def.triggerMetadata(cfg),
+    triggerMetadata,
     actions: buildActions(def, cfg),
     enabled: true,
     exemptRoles: toIdArray(cfg.exemptRoles, 20),
@@ -118,19 +126,13 @@ export const SINGLETON_TRIGGERS = new Set([
   Trigger.MentionSpam,
 ]);
 
-// Payload for editing an existing rule. `triggerType` is immutable on Discord's
-// side, so it's omitted. When adopting an existing KeywordPreset rule we union
-// its presets with ours, so the server keeps any protection it already had.
+// Payload for editing an existing rule — the create payload minus the immutable
+// `triggerType` (Discord rejects changing it).
 export function buildEditPayload(key, cfg, existingRule) {
-  const base = buildRuleDefinition(key, cfg);
+  const base = buildRuleDefinition(key, cfg, existingRule);
   if (!base) return null;
-  const { triggerType, ...rest } = base;
-  if (triggerType === Trigger.KeywordPreset) {
-    const prior = existingRule?.triggerMetadata?.presets ?? [];
-    const merged = [...new Set([...prior, ...rest.triggerMetadata.presets])];
-    rest.triggerMetadata = { ...rest.triggerMetadata, presets: merged };
-  }
-  return rest;
+  delete base.triggerType; // immutable — Discord rejects changing it on edit
+  return base;
 }
 
 // Which rule keys should exist given the current config. Empty when native
@@ -176,24 +178,46 @@ export async function syncNativeRules({ guild, automod, logger }) {
   const wanted = new Set(desiredRuleKeys(automod).map((k) => RULE_DEFS[k].name));
   const summary = { ok: true, created: 0, updated: 0, adopted: 0, removed: 0, failed: 0 };
 
+  const deleteQuietly = async (rule, reason) => {
+    try {
+      await rule.delete(reason);
+    } catch {
+      // Already gone or unmanageable — the slot is free either way.
+    }
+  };
+
   // Create, update, or adopt every wanted rule.
   for (const key of desiredRuleKeys(automod)) {
     const def = RULE_DEFS[key];
     const current = ours.get(def.name);
     // For singleton triggers, a pre-existing rule of that type (ours or the
-    // server's) is the one we must reuse — creating a second is rejected.
+    // server's) occupies the one slot Discord allows — we reclaim it.
     const conflict =
       !current && SINGLETON_TRIGGERS.has(def.triggerType)
         ? (byTrigger.get(def.triggerType) ?? [])[0]
         : null;
     try {
       if (current) {
-        await current.edit(buildEditPayload(key, automod, current));
-        summary.updated += 1;
+        // Edit our own rule; if it's since been deleted/orphaned (a PATCH 404),
+        // recreate it rather than failing the whole sync.
+        try {
+          await current.edit(buildEditPayload(key, automod, current));
+          summary.updated += 1;
+        } catch (editErr) {
+          logger?.warn?.(
+            { err: editErr?.message, rule: def.name },
+            "native automod: edit failed, recreating",
+          );
+          await deleteQuietly(current, "Suzune AutoMod: replacing orphaned rule");
+          await guild.autoModerationRules.create(buildRuleDefinition(key, automod, current));
+          summary.created += 1;
+        }
       } else if (conflict) {
-        // Adopt it: rename to our prefix and apply our config so we own it going
-        // forward (and can clean it up later).
-        await conflict.edit(buildEditPayload(key, automod, conflict));
+        // Reclaim the single slot: some existing rules (e.g. Discord's built-in
+        // raid protection) aren't editable and 404 on PATCH, so we delete then
+        // create our own managed rule in its place.
+        await deleteQuietly(conflict, "Suzune AutoMod: replacing with a managed rule");
+        await guild.autoModerationRules.create(buildRuleDefinition(key, automod, conflict));
         summary.adopted += 1;
       } else {
         await guild.autoModerationRules.create(buildRuleDefinition(key, automod));
@@ -201,7 +225,7 @@ export async function syncNativeRules({ guild, automod, logger }) {
       }
     } catch (err) {
       summary.failed += 1;
-      logger?.error?.({ err, rule: def.name }, "native automod: create/edit failed");
+      logger?.warn?.({ err: err?.message, rule: def.name }, "native automod: rule sync failed");
     }
   }
 
@@ -213,7 +237,7 @@ export async function syncNativeRules({ guild, automod, logger }) {
       summary.removed += 1;
     } catch (err) {
       summary.failed += 1;
-      logger?.error?.({ err, rule: name }, "native automod: delete failed");
+      logger?.warn?.({ err: err?.message, rule: name }, "native automod: delete failed");
     }
   }
 

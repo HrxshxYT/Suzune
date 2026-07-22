@@ -176,9 +176,9 @@ describe("syncNativeRules", () => {
     expect(res.removed).toBe(1);
   });
 
-  it("adopts an existing singleton rule instead of creating a duplicate", async () => {
+  it("adopts an existing singleton rule by reclaiming its slot (delete + create)", async () => {
     // Guild already has a MentionSpam rule (type 5) the server made — Discord
-    // allows only one, so sync must edit it, not create a second.
+    // allows only one, so sync deletes it and creates our managed rule.
     const foreignMention = {
       name: "Server Mention Guard",
       triggerType: Trigger.MentionSpam,
@@ -187,13 +187,44 @@ describe("syncNativeRules", () => {
     };
     const g = guild({ rules: [foreignMention] });
     const res = await syncNativeRules({ guild: g, automod: fullCfg() });
-    expect(foreignMention.edit).toHaveBeenCalledOnce();
+    expect(foreignMention.delete).toHaveBeenCalledOnce();
     expect(res.adopted).toBe(1);
-    // Invites, spam, presets still created; mentions adopted, so not created.
+    // Invites, spam, presets created outright; mentions reclaimed → all created.
     expect(res.created).toBe(RULE_KEYS.length - 1);
-    expect(g.autoModerationRules.create).not.toHaveBeenCalledWith(
+    expect(g.autoModerationRules.create).toHaveBeenCalledWith(
       expect.objectContaining({ triggerType: Trigger.MentionSpam }),
     );
+  });
+
+  it("still creates our rule when the conflicting rule can't be deleted (404)", async () => {
+    const stuck = {
+      name: "Discord raid protection",
+      triggerType: Trigger.MentionSpam,
+      delete: vi.fn(async () => {
+        throw new Error("404: Not Found");
+      }),
+    };
+    const g = guild({ rules: [stuck] });
+    const res = await syncNativeRules({ guild: g, automod: fullCfg() });
+    expect(res.adopted).toBe(1);
+    expect(g.autoModerationRules.create).toHaveBeenCalledWith(
+      expect.objectContaining({ triggerType: Trigger.MentionSpam }),
+    );
+  });
+
+  it("recreates our own rule if editing it 404s", async () => {
+    const orphan = {
+      name: `${RULE_PREFIX}Invite Links`,
+      triggerType: 1,
+      edit: vi.fn(async () => {
+        throw new Error("404: Not Found");
+      }),
+      delete: vi.fn(),
+    };
+    const g = guild({ rules: [orphan] });
+    const res = await syncNativeRules({ guild: g, automod: fullCfg() });
+    expect(orphan.edit).toHaveBeenCalledOnce();
+    expect(res.created).toBe(RULE_KEYS.length); // invites recreated + the other three
   });
 
   it("never touches rules the server made by hand", async () => {
