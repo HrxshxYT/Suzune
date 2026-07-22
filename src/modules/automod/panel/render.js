@@ -54,6 +54,10 @@ export function buildAutomodView(automod, ownerId) {
   );
   const row2 = new ActionRowBuilder().addComponents(
     ...FILTERS.slice(4).map(filterBtn),
+    new ButtonBuilder()
+      .setCustomId(`am:nav:native:${o}`)
+      .setLabel(`${EMOJIS.shield} Discord AutoMod`)
+      .setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`am:close:${o}`).setLabel("Close").setStyle(ButtonStyle.Danger),
   );
 

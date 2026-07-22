@@ -49,4 +49,75 @@ describe("handleAutomodComponent", () => {
     const dir = await handleAutomodComponent({ customId: "am:close:o1" }, state(), ctx());
     expect(dir).toBe("close");
   });
+
+  it("navigates to the native view and back", async () => {
+    const s = state({ view: "main" });
+    await handleAutomodComponent({ customId: "am:nav:native:o1" }, s, ctx());
+    expect(s.view).toBe("native");
+    await handleAutomodComponent({ customId: "am:nav:main:o1" }, s, ctx());
+    expect(s.view).toBe("main");
+  });
+
+  it("toggles a native rule column", async () => {
+    const c = ctx();
+    const s = state({ automod: { nativeInvites: true } });
+    await handleAutomodComponent({ customId: "am:ntog:nativeInvites:o1" }, s, c);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeInvites: false });
+    expect(s.automod.nativeInvites).toBe(false);
+  });
+
+  it("sets the native timeout duration from the select", async () => {
+    const c = ctx();
+    const s = state({ automod: {} });
+    await handleAutomodComponent({ customId: "am:ntimeout:o1", values: ["600"] }, s, c);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeTimeoutSeconds: 600 });
+    expect(s.automod.nativeTimeoutSeconds).toBe(600);
+  });
+
+  it("sets and clears the native alert channel", async () => {
+    const c = ctx();
+    const s = state({ automod: {} });
+    await handleAutomodComponent({ customId: "am:nalertch:o1", values: ["c7"] }, s, c);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeAlertChannelId: "c7" });
+    await handleAutomodComponent({ customId: "am:nalertch:o1", values: [] }, s, c);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeAlertChannelId: null });
+  });
+
+  it("sync enables native AutoMod, provisions rules, and returns 'handled'", async () => {
+    const c = ctx();
+    const s = state({ automod: { nativeEnabled: false, nativeInvites: true } });
+    const i = {
+      customId: "am:nsync:o1",
+      guild: {
+        members: { me: { permissions: { has: () => true } } },
+        autoModerationRules: { fetch: vi.fn(async () => new Map()), create: vi.fn(async () => ({})) },
+      },
+      deferUpdate: vi.fn(async () => {}),
+      editReply: vi.fn(async () => {}),
+    };
+    const dir = await handleAutomodComponent(i, s, c, () => ({ embeds: [], components: [] }));
+    expect(dir).toBe("handled");
+    expect(s.automod.nativeEnabled).toBe(true);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeEnabled: true });
+    expect(i.deferUpdate).toHaveBeenCalled();
+    expect(s.lastSync.ok).toBe(true);
+  });
+
+  it("remove deletes rules and disables native AutoMod", async () => {
+    const c = ctx();
+    const s = state({ automod: { nativeEnabled: true } });
+    const i = {
+      customId: "am:nremove:o1",
+      guild: {
+        members: { me: { permissions: { has: () => true } } },
+        autoModerationRules: { fetch: vi.fn(async () => new Map()) },
+      },
+      deferUpdate: vi.fn(async () => {}),
+      editReply: vi.fn(async () => {}),
+    };
+    const dir = await handleAutomodComponent(i, s, c, () => ({ embeds: [], components: [] }));
+    expect(dir).toBe("handled");
+    expect(s.automod.nativeEnabled).toBe(false);
+    expect(c.config.updateAutomod).toHaveBeenCalledWith("g1", { nativeEnabled: false });
+  });
 });

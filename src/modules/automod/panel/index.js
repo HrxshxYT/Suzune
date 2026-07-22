@@ -1,5 +1,6 @@
 import { runPanel } from "../../../lib/panel.js";
 import { buildAutomodView } from "./render.js";
+import { buildNativeView } from "../native/view.js";
 import { handleAutomodComponent } from "./handlers.js";
 
 export async function runAutomodPanel(interaction, ctx) {
@@ -8,15 +9,20 @@ export async function runAutomodPanel(interaction, ctx) {
   const state = {
     guildId,
     ownerId: interaction.user.id,
+    view: "main", // "main" | "native"
     automod: { ...(gc.automod ?? {}) },
+    lastSync: null,
   };
-  const render = () => buildAutomodView(state.automod, state.ownerId);
+  const render = () =>
+    state.view === "native"
+      ? buildNativeView(state.automod, state.ownerId, state.lastSync)
+      : buildAutomodView(state.automod, state.ownerId);
 
   await runPanel({
     interaction,
     ownerId: state.ownerId,
     render,
-    handle: (i) => handleAutomodComponent(i, state, ctx),
+    handle: (i, render) => handleAutomodComponent(i, state, ctx, render),
     awaitFn: ctx.awaitFn,
   });
 }

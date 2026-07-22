@@ -156,6 +156,19 @@ model AutomodConfig {
   timeoutSeconds  Int     @default(300)
   exemptRoles     Json    @default("[]")
   exemptChannels  Json    @default("[]")
+
+  // Native Discord AutoMod: rules provisioned via the AutoModeration API
+  // (earns the "Uses AutoMod" badge and blocks at Discord's edge). Punishments
+  // are configurable per the block/alert/timeout actions below.
+  nativeEnabled        Boolean @default(false)
+  nativeInvites        Boolean @default(true)
+  nativeMentions       Boolean @default(true)
+  nativeSpam           Boolean @default(true)
+  nativePresets        Boolean @default(true)
+  nativeAlert          Boolean @default(true)
+  nativeAlertChannelId String?
+  nativeTimeout        Boolean @default(true)
+  nativeTimeoutSeconds Int     @default(300)
 }
 
 model WelcomeConfig {
