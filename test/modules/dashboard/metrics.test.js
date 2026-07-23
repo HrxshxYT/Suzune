@@ -77,6 +77,13 @@ describe("computeMetrics", () => {
     expect(m.features["Anti-Nuke"]).toBe(false);
   });
 
+  it("surfaces the DM-on-action toggle as a feature", () => {
+    const on = computeMetrics({ guild: guild(), config: { ...secureConfig, dmOnAction: true } });
+    expect(on.features["DM on Action"]).toBe(true);
+    const off = computeMetrics({ guild: guild(), config: { ...secureConfig, dmOnAction: false } });
+    expect(off.features["DM on Action"]).toBe(false);
+  });
+
   it("flags dangerous @everyone permissions as perm risk", () => {
     const g = guild({
       roles: collection([

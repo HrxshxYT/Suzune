@@ -91,6 +91,7 @@ export function computeMetrics({ guild, config = {}, webhooks = [] } = {}) {
     "Auto-Revert": Boolean(antinuke.autoRevert),
     "Panic Mode": Boolean(antinuke.panicMode),
     "Mod Logging": Boolean(config.modLogEnabled),
+    "DM on Action": Boolean(config.dmOnAction),
   };
 
   let score = 100;

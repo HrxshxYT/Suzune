@@ -29,6 +29,7 @@ export default {
       reason: result.reason,
       cases: ctx.cases,
       logger: ctx.logger,
+      dmOnAction: guildConfig.dmOnAction,
     });
   },
 };

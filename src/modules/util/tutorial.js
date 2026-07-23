@@ -20,7 +20,7 @@ export const TUTORIAL_CHAPTERS = [
       "**Commands:** `/ban` `/kick` `/timeout` `/mute` `/warn` `/purge` `/softban` `/tempban` and their reversals (`/unban`, `/untimeout`, `/unmute`).\n" +
       "**Confirmations:** destructive actions (ban/kick/unban/purge…) ask you to **Confirm** first.\n" +
       "**History:** `/warnings` and `/case` let you review and edit past actions.\n" +
-      "Set a channel for mod logs via `/logging set modActions #channel`.",
+      "Route mod-action logs to a channel from the `/logging` panel.",
   },
   {
     title: `${EMOJIS.shield} Anti-Nuke`,

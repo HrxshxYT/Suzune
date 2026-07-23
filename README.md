@@ -73,7 +73,7 @@ are set in the config phase (`/logging` / `/config`).
 ## Configuration & Help
 
 - `/config` — `view`, `modrole add|remove`, `dmonaction on|off`, `muterole [role]`, `reset`.
-- `/logging` — `set <category> <channel>`, `disable <category>`, `enable <category>`, `view`.
+- `/logging` — button control panel: pick a category, route it to a channel, and enable/disable it.
 - `/antinuke` — anti-nuke setup (see Anti-Nuke).
 - `/help` — dynamic, category-grouped command list with `/help <command>` details and autocomplete.
 
