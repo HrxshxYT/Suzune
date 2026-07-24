@@ -1,85 +1,50 @@
 import { describe, it, expect, vi } from "vitest";
-import listener from "../../../src/modules/automod/events/messageCreate.js";
-import { AutomodState } from "../../../src/modules/automod/AutomodState.js";
+import handler from "../../../src/modules/automod/events/messageCreate.js";
+import { HeatService } from "../../../src/core/HeatService.js";
+import { RuleCache } from "../../../src/modules/automod/rules/cache.js";
+import { FeedLoader } from "../../../src/modules/automod/feed/loader.js";
 
-function ctx(config) {
+function ctxFor(packStates, rules = []) {
   return {
-    config: { getGuild: vi.fn(async () => ({ automod: config })) },
-    cases: { createCase: vi.fn(async () => ({})) },
-    automod: new AutomodState(() => 1000),
-    logger: { error: vi.fn() },
+    config: {
+      getGuild: vi.fn(async () => ({ automod: { enabled: true, heatThreshold: 50, heatDecaySec: 60, thresholdAction: "timeout", timeoutSeconds: 300, exemptRoles: [], exemptChannels: [] }, dmOnAction: false })),
+      getPackStates: vi.fn(async () => packStates),
+      getAutomodRules: vi.fn(async () => rules),
+      addAutomodLog: vi.fn(),
+      disableAutomodRule: vi.fn(),
+    },
+    heat: new HeatService(() => 0),
+    automodFeed: new FeedLoader({ feedUrl: null, logger: { warn() {}, info() {} } }),
+    automodRules: new RuleCache({ warn() {} }),
+    cases: { createCase: vi.fn() },
+    logger: { error() {}, warn() {} },
   };
 }
 
-function message(over = {}) {
-  return {
-    guild: { id: "g1" },
-    channelId: "c1",
-    author: { id: "u1", bot: false },
-    content: "",
-    mentions: { users: new Map(), roles: new Map() },
-    member: { permissions: { has: () => false }, roles: { cache: new Map() } },
-    delete: vi.fn(async () => {}),
-    client: { user: { id: "bot" } },
-    ...over,
-  };
-}
-
-const enabledConfig = {
-  enabled: true,
-  antiSpam: true,
-  spamCount: 3,
-  spamWindowSec: 5,
-  antiMentionSpam: true,
-  mentionLimit: 5,
-  filterInvites: true,
-  filterLinks: false,
-  antiCaps: false,
-  antiEmojiSpam: false,
-  action: "delete",
-  exemptRoles: [],
-  exemptChannels: [],
-};
+const scamMessage = () => ({
+  guild: { id: "g", name: "S" }, author: { id: "u", bot: false }, channelId: "c",
+  member: { id: "u", displayName: "u", roles: { cache: new Map() }, permissions: { has: () => false }, timeout: vi.fn().mockResolvedValue(), user: { id: "u" } },
+  content: "free nitro discord.gift/abc", embeds: [], attachments: new Map(), stickers: new Map(),
+  client: { user: { id: "bot" } }, delete: vi.fn().mockResolvedValue(),
+});
 
 describe("automod messageCreate", () => {
   it("ignores bots", async () => {
-    const c = ctx(enabledConfig);
-    const m = message({ author: { id: "b", bot: true } });
-    await listener.execute(c, m);
-    expect(m.delete).not.toHaveBeenCalled();
+    const ctx = ctxFor([]);
+    await handler.execute(ctx, { ...scamMessage(), author: { id: "u", bot: true } });
+    expect(ctx.config.getGuild).not.toHaveBeenCalled();
   });
-
-  it("does nothing when automod is disabled", async () => {
-    const c = ctx({ ...enabledConfig, enabled: false });
-    const m = message({ content: "discord.gg/x" });
-    await listener.execute(c, m);
-    expect(m.delete).not.toHaveBeenCalled();
+  it("deletes a scam message when the nitro pack is enabled", async () => {
+    const ctx = ctxFor([{ packId: "nitro", enabled: true, installedVersion: 1 }, { packId: "core", enabled: true, installedVersion: 1 }]);
+    const msg = scamMessage();
+    await handler.execute(ctx, msg);
+    expect(msg.delete).toHaveBeenCalled();
   });
-
-  it("deletes an invite-link message", async () => {
-    const c = ctx(enabledConfig);
-    const m = message({ content: "join discord.gg/xyz" });
-    await listener.execute(c, m);
-    expect(m.delete).toHaveBeenCalled();
-  });
-
-  it("deletes on spam after the threshold", async () => {
-    const c = ctx(enabledConfig);
-    let m;
-    for (let i = 0; i < 3; i++) {
-      m = message();
-      await listener.execute(c, m);
-    }
-    expect(m.delete).toHaveBeenCalled(); // 3rd message trips spamCount=3
-  });
-
   it("skips exempt members", async () => {
-    const c = ctx(enabledConfig);
-    const m = message({
-      content: "discord.gg/xyz",
-      member: { permissions: { has: () => true }, roles: { cache: new Map() } },
-    });
-    await listener.execute(c, m);
-    expect(m.delete).not.toHaveBeenCalled();
+    const ctx = ctxFor([{ packId: "nitro", enabled: true, installedVersion: 1 }]);
+    const msg = scamMessage();
+    msg.member.permissions.has = () => true; // Manage Messages
+    await handler.execute(ctx, msg);
+    expect(msg.delete).not.toHaveBeenCalled();
   });
 });
