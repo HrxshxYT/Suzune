@@ -17,6 +17,7 @@ import { AntinukeState } from "./modules/antinuke/AntinukeState.js";
 import { CaseService } from "./modules/moderation/CaseService.js";
 import { registerExpiryJob } from "./modules/moderation/expiry.js";
 import { registerModLogListener } from "./modules/logging/modLog.js";
+import { registerFeedRefresh } from "./modules/automod/feed/refresh.js";
 import { InviteService } from "./modules/invites/InviteService.js";
 import { InviteCache } from "./modules/invites/InviteCache.js";
 import { AutomodState } from "./modules/automod/AutomodState.js";
@@ -126,6 +127,7 @@ export async function startBot() {
   bindEvents(client, listeners, context);
   registerExpiryJob(context);
   registerModLogListener(context);
+  registerFeedRefresh(context);
   client.once("ready", (c) =>
     logger.info(`Logged in as ${c.user.tag} (shard ready)`));
 
