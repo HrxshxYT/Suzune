@@ -20,6 +20,9 @@ import { registerModLogListener } from "./modules/logging/modLog.js";
 import { InviteService } from "./modules/invites/InviteService.js";
 import { InviteCache } from "./modules/invites/InviteCache.js";
 import { AutomodState } from "./modules/automod/AutomodState.js";
+import { HeatService } from "./core/HeatService.js";
+import { FeedLoader } from "./modules/automod/feed/loader.js";
+import { RuleCache } from "./modules/automod/rules/cache.js";
 import { ReactionRoleService } from "./modules/welcome/ReactionRoleService.js";
 import { LevelingService } from "./modules/leveling/LevelingService.js";
 import { TicketService } from "./modules/tickets/TicketService.js";
@@ -108,6 +111,9 @@ export async function startBot() {
     invites: new InviteService(prisma),
     inviteCache: new InviteCache(),
     automod: new AutomodState(),
+    heat: new HeatService(),
+    automodFeed: new FeedLoader({ feedUrl: env.scamFeedUrl ?? null, logger }),
+    automodRules: new RuleCache(logger),
     reactionRoles: new ReactionRoleService(prisma),
     leveling: new LevelingService(prisma),
     tickets: new TicketService(prisma),
