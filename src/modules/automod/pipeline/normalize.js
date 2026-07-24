@@ -1,8 +1,8 @@
 import { fold } from "../confusables/fold.js";
 
-const ZERO_WIDTH = /[​-‍⁠﻿]/g; // U+200B–U+200D, U+2060, U+FEFF
+const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
 const COMBINING = /\p{M}+/gu;
-const RUN_3PLUS = /(.)\1{2,}/gus; // 3+ identical → keep 2
+const RUN_3PLUS = /(.)\1{2,}/gsu; // 3+ identical → keep 2
 const NON_ALNUM = /[^a-z0-9]+/gu;
 
 // Stage 2 of the automod pipeline: normalize text to defeat character-level

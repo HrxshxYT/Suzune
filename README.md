@@ -118,11 +118,52 @@ Requires the bot to have **Manage Server** so it can read the invite list.
 
 ## Auto-Moderation
 
-`/automod` (Administrator) toggles filters and picks an action (`delete` / `warn` / `timeout`):
-anti-spam, anti-mention-spam, invite filter, link filter, mass-caps, and emoji spam. Members with
-**Manage Messages**, exempt roles, and exempt channels are skipped (`/automod exempt`). The
-content filters (invites/links, caps, emoji) require the privileged **Message Content** intent —
-enable it in the Developer Portal; without it those filters simply never trigger.
+`/automod` (Administrator) runs every message through a five-stage pipeline: **extract** (message
+content, embeds, attachment/sticker filenames, display name, and parsed URLs) → **normalize**
+(defeat character-level evasion) → **evaluate** (run rules against the normalized text) →
+**score** (turn hits into decaying "heat") → **act** (delete / punish). Requires the privileged
+**Message Content** intent to see message text at all — enable it in the Developer Portal.
+
+**Normalization** runs Unicode NFKC, strips zero-width joiners, removes combining marks, and
+**folds confusables** — homoglyphs like Cyrillic `а`/`о`/`е` get mapped back to their Latin
+look-alikes — before collapsing stretched-out letters (`niiitro` → `nitro`) and lowercasing. A
+second, separator-stripped variant is produced alongside the normal one so spaced-out text like
+`d i s c o r d . g i f t` still matches. Rules can target the raw text, the normalized text, the
+stripped text, or all three.
+
+**Rule packs** are the headline feature: curated, versioned bundles of patterns you toggle on or
+off per guild instead of hand-writing regex. Built-in packs: **Core filters** (invite/link
+baseline), **Nitro scams**, **Steam gift scams**, **Crypto & airdrop scams**, **IP grabbers &
+loggers**, and **Raid advertising**. Each pack carries a version number; when Suzune ships an
+updated pack, guilds that installed an older version are flagged for an update instead of being
+silently rewritten.
+
+**Custom rules** (`/automod rules add|list|remove|edit`) are the escape hatch for anything packs
+don't cover. Patterns compile with **re2** for linear-time, DoS-safe matching — which means
+**no backreferences and no lookahead/lookbehind**; re2's engine simply doesn't support them, and
+patterns that need them are rejected at validation time. Limits: 50 custom rules per guild,
+patterns up to 200 characters, and patterns that would match every message (`.*`, empty string)
+are refused outright. `/automod test <pattern> <sample>` lets you dry-run a pattern against sample
+text before saving it.
+
+Matches don't punish immediately — each hit contributes weighted **heat** to the offending member,
+which **decays over time**. Punishment (`warn` / `timeout` / `kick` / `ban` / `quarantine`) only
+fires once a member's cumulative heat crosses a configurable threshold, so one capitalization
+violation isn't treated the same as one scam link. Any pack rule or custom rule can also be flipped
+to **dry-run (log-only)**: it's evaluated and recorded via `/automod logs`, contributing zero heat,
+so you can trial a new rule against live traffic before it ever punishes anyone.
+
+Members with **Manage Messages**, exempt roles, and exempt channels are always skipped — configure
+them from the panel (`/automod exempt`). Suzune also provisions matching **native Discord
+AutoMod** rules from your enabled packs (so the server still earns Discord's "Uses AutoMod" badge)
+projecting the literal keyword/regex parts of each pack onto Discord's own AutoModeration API for
+instant edge-blocking, while the full pipeline (confusables, heat, dry-run) keeps running
+server-side for everything native rules can't express.
+
+**Command surface:** `/automod panel` (dashboard for packs, thresholds, and exemptions),
+`/automod rules add|list|remove|edit` (custom re2 rules), `/automod test <pattern> <sample>`,
+`/automod packs` (enable/disable/update packs), `/automod exempt` (roles/channels), `/automod logs`
+(recent hits, including dry-run).
 
 ## Welcome & Onboarding
 
@@ -195,9 +236,9 @@ changes in the server to one channel — complementary to the per-category `/log
 - **Purple liquid-glass image cards** (iOS-26 style) for `/dashboard`, `/scan`, `/ping`,
   `/rank`, and `/help`, sharing one card kit (`src/lib/glassCard.js`).
 - **Interactive buttons:** category-select `/help` with glass cards, paged `/invites
-  leaderboard`, an interactive `/tutorial`
+leaderboard`, an interactive `/tutorial`
   walkthrough, **Confirm/Cancel** prompts on destructive moderation (`ban/kick/unban/softban/
-  tempban/purge`), and a `/automod panel` button dashboard. Buttons are owner-gated and expire
+tempban/purge`), and a `/automod panel` button dashboard. Buttons are owner-gated and expire
   after a few minutes.
 - `/tutorial` — a guided, button-navigated tour of every feature.
 

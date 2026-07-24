@@ -1,7 +1,7 @@
 import { Events } from "discord.js";
 import { runPipeline } from "../pipeline/index.js";
 import { isExempt } from "../pipeline/act.js";
-import { PACKS, getPack } from "../rules/packs/index.js";
+import { PACKS } from "../rules/packs/index.js";
 
 // Assemble the effective rule rows for a guild: enabled packs' rules (with a
 // synthetic id per rule) + the guild's custom rules.
@@ -39,13 +39,23 @@ export default {
         ctx.config.getPackStates(message.guild.id),
         ctx.config.getAutomodRules(message.guild.id),
       ]);
-      compiledRules = ctx.automodRules.set(message.guild.id, effectiveRules(packStates, customRules));
+      compiledRules = ctx.automodRules.set(
+        message.guild.id,
+        effectiveRules(packStates, customRules),
+      );
     }
 
     const result = await runPipeline({
-      message, member, config, guildConfig, compiledRules,
-      heat: ctx.heat, blocklist: ctx.automodFeed.getBlocklist(), shorteners: new Set(),
-      cases: ctx.cases, logger: ctx.logger,
+      message,
+      member,
+      config,
+      guildConfig,
+      compiledRules,
+      heat: ctx.heat,
+      blocklist: ctx.automodFeed.getBlocklist(),
+      shorteners: new Set(),
+      cases: ctx.cases,
+      logger: ctx.logger,
     });
 
     // Self-heal: persist and report any rule that blew its time budget.
@@ -64,9 +74,14 @@ export default {
     for (const hit of [...result.hits, ...result.dryRunHits]) {
       try {
         await ctx.config.addAutomodLog(message.guild.id, {
-          userId: message.author.id, channelId: message.channelId, source: hit.source,
-          action: hit.dryRun ? "log-only" : (result.memberAction ?? (hit.deleteOnHit ? "delete" : "flagged")),
-          dryRun: Boolean(hit.dryRun), heatAfter: Math.round(result.heatAfter ?? 0),
+          userId: message.author.id,
+          channelId: message.channelId,
+          source: hit.source,
+          action: hit.dryRun
+            ? "log-only"
+            : (result.memberAction ?? (hit.deleteOnHit ? "delete" : "flagged")),
+          dryRun: Boolean(hit.dryRun),
+          heatAfter: Math.round(result.heatAfter ?? 0),
           sample: (message.content ?? "").slice(0, 200),
         });
       } catch {
