@@ -1,6 +1,6 @@
 // test/modules/automod/pipelineIndex.test.js
 import { describe, it, expect, vi } from "vitest";
-import RE2 from "re2";
+import { RE2 } from "re2-wasm";
 import { runPipeline } from "../../../src/modules/automod/pipeline/index.js";
 import { HeatService } from "../../../src/core/HeatService.js";
 
@@ -13,7 +13,7 @@ describe("runPipeline", () => {
       client: { user: { id: "bot" } }, delete: vi.fn().mockResolvedValue(),
     };
     const member = { id: "u", displayName: "u", timeout: vi.fn().mockResolvedValue(), user: { id: "u" }, roles: { cache: new Map() }, permissions: { has: () => false } };
-    const compiledRules = [{ id: "p", source: "nitro", target: "normalized", weight: 60, deleteOnHit: true, dryRun: false, re: new RE2("free\\s*nitro", "i") }];
+    const compiledRules = [{ id: "p", source: "nitro", target: "normalized", weight: 60, deleteOnHit: true, dryRun: false, re: new RE2("free\\s*nitro", "iu") }];
     const r = await runPipeline({
       message, member, config: { heatThreshold: 100, heatDecaySec: 60, thresholdAction: "timeout", timeoutSeconds: 300, exemptRoles: [], exemptChannels: [] },
       guildConfig: { dmOnAction: false }, compiledRules, heat: new HeatService(() => 0),
@@ -31,7 +31,7 @@ describe("runPipeline", () => {
       client: { user: { id: "bot" } }, delete: vi.fn().mockResolvedValue(),
     };
     const member = { id: "u", displayName: "u", timeout: vi.fn().mockResolvedValue(), user: { id: "u" }, roles: { cache: new Map() }, permissions: { has: () => false } };
-    const compiledRules = [{ id: "p", source: "nitro", target: "normalized", weight: 60, deleteOnHit: true, dryRun: false, re: new RE2("free\\s*nitro", "i") }];
+    const compiledRules = [{ id: "p", source: "nitro", target: "normalized", weight: 60, deleteOnHit: true, dryRun: false, re: new RE2("free\\s*nitro", "iu") }];
     const heat = new HeatService(() => 0);
     const config = { heatThreshold: 50, heatDecaySec: 60, thresholdAction: "timeout", timeoutSeconds: 300, exemptRoles: [], exemptChannels: [] };
     const r = await runPipeline({

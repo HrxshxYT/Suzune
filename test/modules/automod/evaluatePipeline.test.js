@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import RE2 from "re2";
+import { RE2 } from "re2-wasm";
 import { evaluate } from "../../../src/modules/automod/pipeline/evaluate.js";
 import { Budget } from "../../../src/modules/automod/budget.js";
 
@@ -10,7 +10,7 @@ const rule = () => ({
   weight: 20,
   deleteOnHit: true,
   dryRun: false,
-  re: new RE2("nitro", "i"),
+  re: new RE2("nitro", "iu"),
 });
 
 describe("evaluate", () => {
@@ -27,7 +27,7 @@ describe("evaluate", () => {
     expect(hits[0].weight).toBe(20);
   });
   it("matches target=any against all variants", () => {
-    const r = { ...rule(), target: "any", re: new RE2("discordgift", "i") };
+    const r = { ...rule(), target: "any", re: new RE2("discordgift", "iu") };
     const { hits } = evaluate({
       variants: { raw: "x", normalized: "x", stripped: "discordgift" },
       urls: [],

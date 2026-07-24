@@ -1,5 +1,10 @@
 // src/modules/automod/rules/validate.js
-import RE2 from "re2";
+// re2-wasm: a WebAssembly build of Google's RE2 — same linear-time, backtracking-
+// immune engine as the native `re2` addon, but a pure JS/wasm package with no
+// install script or native compile step. This matters for hosts that block
+// dependency install scripts or lack a build toolchain (the native addon leaves
+// no binary there). re2-wasm requires the Unicode ("u") flag on every pattern.
+import { RE2 } from "re2-wasm";
 
 export const MAX_PATTERN_LEN = 200;
 export const MAX_RULES_PER_GUILD = 50;
@@ -16,7 +21,7 @@ export function validatePattern(src, { maxLen = MAX_PATTERN_LEN } = {}) {
     return { ok: false, error: "Pattern matches every message." };
   let re;
   try {
-    re = new RE2(src, "i");
+    re = new RE2(src, "iu");
   } catch (e) {
     return { ok: false, error: `Invalid pattern: ${e.message} (re2 has no lookaround or backreferences).` };
   }
