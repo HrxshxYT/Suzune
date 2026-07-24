@@ -9,51 +9,29 @@ import {
 } from "discord.js";
 import { EMOJIS } from "../../../lib/constants.js";
 import { buildAutomodEmbed } from "../statusEmbed.js";
-
-// DB column → short button label for each message filter.
-export const FILTERS = [
-  ["antiSpam", "spam"],
-  ["antiMentionSpam", "mentions"],
-  ["filterInvites", "invites"],
-  ["filterLinks", "links"],
-  ["antiCaps", "caps"],
-  ["antiEmojiSpam", "emoji"],
-];
+import { buildPacksRow } from "./packs.js";
 
 export const ACTIONS = [
-  ["delete", "Delete message"],
   ["warn", "Warn"],
   ["timeout", "Timeout"],
+  ["kick", "Kick"],
+  ["ban", "Ban"],
+  ["quarantine", "Quarantine"],
 ];
 
-export function buildAutomodView(automod, ownerId) {
+export function buildAutomodView(automod, packStates, ownerId) {
   const a = automod;
   const o = ownerId;
 
-  const embed = buildAutomodEmbed(a).addFields({
-    name: "Exempt",
-    value: `${(a.exemptRoles ?? []).length} roles · ${(a.exemptChannels ?? []).length} channels`,
-    inline: true,
-  });
-
-  const filterBtn = ([col, label]) =>
-    new ButtonBuilder()
-      .setCustomId(`am:tog:${col}:${o}`)
-      .setLabel(`${a[col] ? EMOJIS.on : EMOJIS.off} ${label}`)
-      .setStyle(a[col] ? ButtonStyle.Success : ButtonStyle.Secondary);
+  const embed = buildAutomodEmbed(a, packStates);
 
   const enabledBtn = new ButtonBuilder()
     .setCustomId(`am:tog:enabled:${o}`)
     .setLabel(`${a.enabled ? EMOJIS.on : EMOJIS.off} Enabled`)
     .setStyle(a.enabled ? ButtonStyle.Success : ButtonStyle.Secondary);
 
-  // Row 1: enable toggle + first 4 filters. Row 2: last 2 filters + Close.
   const row1 = new ActionRowBuilder().addComponents(
     enabledBtn,
-    ...FILTERS.slice(0, 4).map(filterBtn),
-  );
-  const row2 = new ActionRowBuilder().addComponents(
-    ...FILTERS.slice(4).map(filterBtn),
     new ButtonBuilder()
       .setCustomId(`am:nav:native:${o}`)
       .setLabel(`${EMOJIS.shield} Discord AutoMod`)
@@ -64,15 +42,17 @@ export function buildAutomodView(automod, ownerId) {
   const actionRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`am:action:${o}`)
-      .setPlaceholder("Action when a filter trips")
+      .setPlaceholder("Action at heat threshold")
       .addOptions(
         ACTIONS.map(([value, label]) => ({
           label,
           value,
-          default: (a.action ?? "delete") === value,
+          default: (a.thresholdAction ?? "timeout") === value,
         })),
       ),
   );
+
+  const packsRow = buildPacksRow(packStates, o);
 
   const rolesRow = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
@@ -93,5 +73,5 @@ export function buildAutomodView(automod, ownerId) {
       .setDefaultChannels(...(a.exemptChannels ?? [])),
   );
 
-  return { embeds: [embed], components: [row1, row2, actionRow, rolesRow, channelsRow] };
+  return { embeds: [embed], components: [row1, actionRow, packsRow, rolesRow, channelsRow] };
 }

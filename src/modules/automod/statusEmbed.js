@@ -1,20 +1,18 @@
 import { EmbedBuilder } from "discord.js";
 import { COLORS } from "../../lib/constants.js";
+import { PACKS } from "./rules/packs/index.js";
 
-export function buildAutomodEmbed(config = {}) {
-  const on = (v) => (v ? "✅" : "❌");
+export function buildAutomodEmbed(automod = {}, packStates = []) {
+  const a = automod;
+  const enabledPacks = packStates.filter((p) => p.enabled).length;
   return new EmbedBuilder()
-    .setColor(config.enabled ? COLORS.success : COLORS.warn)
+    .setColor(a.enabled ? COLORS.success : COLORS.warn)
     .setTitle("🤖 Auto-Moderation")
     .addFields(
-      { name: "Enabled", value: config.enabled ? "✅ Yes" : "❌ No", inline: true },
-      { name: "Action", value: `\`${config.action ?? "delete"}\``, inline: true },
-      {
-        name: "Filters",
-        value:
-          `${on(config.antiSpam)} spam  ${on(config.antiMentionSpam)} mentions  ` +
-          `${on(config.filterInvites)} invites  ${on(config.filterLinks)} links  ` +
-          `${on(config.antiCaps)} caps  ${on(config.antiEmojiSpam)} emoji`,
-      },
+      { name: "Enabled", value: a.enabled ? "✅ Yes" : "❌ No", inline: true },
+      { name: "Heat threshold", value: `${a.heatThreshold ?? 100}`, inline: true },
+      { name: "Action", value: `\`${a.thresholdAction ?? "timeout"}\``, inline: true },
+      { name: "Decay", value: `${a.heatDecaySec ?? 60}s`, inline: true },
+      { name: "Rule packs", value: `${enabledPacks}/${PACKS.length} enabled`, inline: true },
     );
 }

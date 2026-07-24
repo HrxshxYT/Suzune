@@ -203,11 +203,15 @@ describe("/automod command", () => {
 
   it("routes panel/packs/exempt subcommands to runAutomodPanel", async () => {
     const ctx = {
-      config: { getGuild: vi.fn(async () => ({ automod: {} })) },
+      config: {
+        getGuild: vi.fn(async () => ({ automod: {} })),
+        getPackStates: vi.fn(async () => []),
+      },
       awaitFn: vi.fn(async () => null),
     };
     const i = interaction({}, { group: null, sub: "panel" });
     await command.execute(i, ctx);
     expect(ctx.config.getGuild).toHaveBeenCalledWith("g");
+    expect(ctx.config.getPackStates).toHaveBeenCalledWith("g");
   });
 });
