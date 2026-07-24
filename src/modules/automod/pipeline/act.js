@@ -12,7 +12,7 @@ export function isExempt({ member, channelId, config }) {
   return false;
 }
 
-async function punish(action, { message, member, config, reason, cases }) {
+async function punish(action, { message, member, config, guildConfig, reason, cases, logger }) {
   const guildId = message.guild.id;
   const botId = message.client.user.id;
   const base = { guildId, targetId: member.id, moderatorId: botId, reason: `AutoMod: ${reason}` };
@@ -20,22 +20,59 @@ async function punish(action, { message, member, config, reason, cases }) {
     case "warn":
       await cases.createCase({ ...base, type: "warn" });
       return "warn";
-    case "timeout":
-      await member.timeout((config.timeoutSeconds ?? 300) * 1000, base.reason).catch(() => {});
+    case "timeout": {
+      const ok = await member
+        .timeout((config.timeoutSeconds ?? 300) * 1000, base.reason)
+        .then(() => true)
+        .catch((err) => {
+          logger.error?.({ err, guildId }, "automod timeout failed");
+          return false;
+        });
+      if (!ok) return null;
       await cases.createCase({ ...base, type: "timeout", expiresAt: new Date(Date.now() + (config.timeoutSeconds ?? 300) * 1000) });
       return "timeout";
-    case "kick":
-      await member.kick(base.reason).catch(() => {});
+    }
+    case "kick": {
+      const ok = await member
+        .kick(base.reason)
+        .then(() => true)
+        .catch((err) => {
+          logger.error?.({ err, guildId }, "automod kick failed");
+          return false;
+        });
+      if (!ok) return null;
       await cases.createCase({ ...base, type: "kick" });
       return "kick";
-    case "ban":
-      await message.guild.bans.create(member.id, { reason: base.reason }).catch(() => {});
+    }
+    case "ban": {
+      const ok = await message.guild.bans
+        .create(member.id, { reason: base.reason })
+        .then(() => true)
+        .catch((err) => {
+          logger.error?.({ err, guildId }, "automod ban failed");
+          return false;
+        });
+      if (!ok) return null;
       await cases.createCase({ ...base, type: "ban" });
       return "ban";
-    case "quarantine":
-      if (config.quarantineRoleId) await member.roles.set([config.quarantineRoleId], base.reason).catch(() => {});
+    }
+    case "quarantine": {
+      const roleId = guildConfig?.antinuke?.quarantineRoleId;
+      if (!roleId) {
+        logger.warn?.({ guildId }, "automod quarantine: no quarantine role configured; skipping");
+        return null;
+      }
+      const ok = await member.roles
+        .set([roleId], base.reason)
+        .then(() => true)
+        .catch((err) => {
+          logger.error?.({ err, guildId }, "automod quarantine failed");
+          return false;
+        });
+      if (!ok) return null;
       await cases.createCase({ ...base, type: "quarantine" });
       return "quarantine";
+    }
     default:
       return null;
   }
@@ -53,7 +90,7 @@ export async function act({ message, member, config, guildConfig, deleteMessage,
   let memberAction = null;
   if (member && heatAfter >= config.heatThreshold) {
     memberAction = await punish(config.thresholdAction, {
-      message, member, config, reason: `heat ${Math.round(heatAfter)} ≥ ${config.heatThreshold}`, cases,
+      message, member, config, guildConfig, reason: `heat ${Math.round(heatAfter)} ≥ ${config.heatThreshold}`, cases, logger,
     });
     const phrasing = DM_PHRASING[memberAction];
     if (guildConfig?.dmOnAction && phrasing) {

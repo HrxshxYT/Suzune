@@ -137,6 +137,12 @@ export async function startBot() {
   const pingSampler = setInterval(() => context.pingHistory.push(client.ws.ping), 10_000);
   pingSampler.unref?.();
 
+  // HeatService entries never expire on their own; sweep out decayed-away
+  // entries periodically so the map doesn't grow unbounded. 60s nominal
+  // half-life, swept every 5 minutes.
+  const heatSweep = setInterval(() => context.heat.sweep(60_000), 300_000);
+  heatSweep.unref?.();
+
   return { client, context };
 }
 

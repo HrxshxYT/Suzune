@@ -45,4 +45,50 @@ describe("act", () => {
     expect(r.memberAction).toBeNull();
     expect(member.timeout).not.toHaveBeenCalled();
   });
+
+  it("quarantines using the antinuke quarantine role when one is configured", async () => {
+    const message = fakeMessage();
+    const member = { id: "u", roles: { set: vi.fn().mockResolvedValue() }, user: { id: "u" } };
+    const cases = { createCase: vi.fn().mockResolvedValue({}) };
+    const config = { ...baseConfig, thresholdAction: "quarantine" };
+    const guildConfig = { dmOnAction: false, antinuke: { quarantineRoleId: "role-123" } };
+    const r = await act({
+      message, member, config, guildConfig,
+      deleteMessage: false, heatAfter: 120, cases, logger: { error() {}, warn() {} },
+    });
+    expect(member.roles.set).toHaveBeenCalledWith(["role-123"], expect.any(String));
+    expect(cases.createCase).toHaveBeenCalledWith(expect.objectContaining({ type: "quarantine" }));
+    expect(r.memberAction).toBe("quarantine");
+  });
+
+  it("skips quarantine (no role action, no case) when no quarantine role is configured", async () => {
+    const message = fakeMessage();
+    const member = { id: "u", roles: { set: vi.fn().mockResolvedValue() }, user: { id: "u" } };
+    const cases = { createCase: vi.fn().mockResolvedValue({}) };
+    const config = { ...baseConfig, thresholdAction: "quarantine" };
+    const guildConfig = { dmOnAction: false, antinuke: {} };
+    const warn = vi.fn();
+    const r = await act({
+      message, member, config, guildConfig,
+      deleteMessage: false, heatAfter: 120, cases, logger: { error() {}, warn },
+    });
+    expect(member.roles.set).not.toHaveBeenCalled();
+    expect(cases.createCase).not.toHaveBeenCalled();
+    expect(r.memberAction).toBeNull();
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it("logs and skips the case when the punishment action fails", async () => {
+    const message = fakeMessage();
+    const member = { id: "u", timeout: vi.fn().mockRejectedValue(new Error("missing permissions")), user: { id: "u" } };
+    const cases = { createCase: vi.fn().mockResolvedValue({}) };
+    const error = vi.fn();
+    const r = await act({
+      message, member, config: baseConfig, guildConfig: { dmOnAction: false },
+      deleteMessage: false, heatAfter: 120, cases, logger: { error, warn() {} },
+    });
+    expect(error).toHaveBeenCalled();
+    expect(cases.createCase).not.toHaveBeenCalled();
+    expect(r.memberAction).toBeNull();
+  });
 });

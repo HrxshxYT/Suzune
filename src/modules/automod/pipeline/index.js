@@ -23,6 +23,12 @@ export async function runPipeline({
   let memberAction = null;
   if (liveHits.length) {
     ({ memberAction } = await act({ message, member, config, guildConfig, deleteMessage, heatAfter, cases, logger }));
+    // Reset heat once the threshold is crossed and handled, regardless of whether
+    // the member action itself succeeded — otherwise heat stays pinned above the
+    // threshold and every subsequent hit re-fires punishment/case creation.
+    if (heatAfter >= config.heatThreshold) {
+      heat.reset(message.guild.id, member?.id ?? message.author.id);
+    }
   }
   return { hits: liveHits, dryRunHits, memberAction, heatAfter, disabled };
 }

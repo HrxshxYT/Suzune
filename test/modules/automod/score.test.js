@@ -24,4 +24,18 @@ describe("score", () => {
     expect(r.dryRunHits).toHaveLength(1);
     expect(r.liveHits).toHaveLength(0);
   });
+
+  it("a mixed batch only counts the live hit's weight toward heat and delete", () => {
+    const heat = new HeatService(() => 0);
+    const dryHit = { source: "dry", weight: 99, deleteOnHit: true, dryRun: true };
+    const liveHit = { source: "live", weight: 40, deleteOnHit: true, dryRun: false };
+    const r = score({
+      hits: [dryHit, liveHit],
+      guildId: "g", userId: "u", heat, halfLifeMs: 60000,
+    });
+    expect(r.heatAfter).toBe(40); // only the live hit's weight, not 99 + 40
+    expect(r.deleteMessage).toBe(true); // driven only by the live hit
+    expect(r.dryRunHits).toEqual([dryHit]);
+    expect(r.liveHits).toEqual([liveHit]);
+  });
 });

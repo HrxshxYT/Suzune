@@ -1,6 +1,7 @@
 import { Events } from "discord.js";
 import { runPipeline } from "../pipeline/index.js";
 import { isExempt } from "../pipeline/act.js";
+import { KNOWN_SHORTENERS } from "../pipeline/url.js";
 import { PACKS } from "../rules/packs/index.js";
 
 // Assemble the effective rule rows for a guild: enabled packs' rules (with a
@@ -53,7 +54,7 @@ export default {
       compiledRules,
       heat: ctx.heat,
       blocklist: ctx.automodFeed.getBlocklist(),
-      shorteners: new Set(),
+      shorteners: KNOWN_SHORTENERS,
       cases: ctx.cases,
       logger: ctx.logger,
     });

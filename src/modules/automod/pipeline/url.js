@@ -11,6 +11,24 @@ export const DEFAULT_TARGETS = [
 
 const WEIGHTS = { blocklist: 80, impersonation: 60, "mixed-script": 50, shortener: 25 };
 
+export const KNOWN_SHORTENERS = new Set([
+  "bit.ly",
+  "tinyurl.com",
+  "goo.gl",
+  "t.co",
+  "ow.ly",
+  "is.gd",
+  "buff.ly",
+  "rebrand.ly",
+  "cutt.ly",
+  "shorturl.at",
+  "rb.gy",
+  "tiny.cc",
+  "bit.do",
+  "soo.gd",
+  "s.id",
+]);
+
 export function levenshtein(a, b) {
   const m = a.length, n = b.length;
   const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
