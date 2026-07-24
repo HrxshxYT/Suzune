@@ -30,8 +30,9 @@ export default {
     const member = message.member;
     if (isExempt({ member, channelId: message.channelId, config })) return;
 
-    // Compiled rules cached per guild; rebuild when the cache is cold (invalidated
-    // on any rule/pack edit via ConfigService).
+    // Compiled rules are cached per guild; the cache is cold on first use and is
+    // invalidated by the rule/pack management commands and the self-heal loop below
+    // (not by ConfigService.invalidate, which only clears the guild-config cache).
     let compiledRules = ctx.automodRules.get(message.guild.id);
     if (!compiledRules) {
       const [packStates, customRules] = await Promise.all([
@@ -64,7 +65,7 @@ export default {
       try {
         await ctx.config.addAutomodLog(message.guild.id, {
           userId: message.author.id, channelId: message.channelId, source: hit.source,
-          action: hit.dryRun ? "log-only" : result.memberAction ?? "delete",
+          action: hit.dryRun ? "log-only" : (result.memberAction ?? (hit.deleteOnHit ? "delete" : "flagged")),
           dryRun: Boolean(hit.dryRun), heatAfter: Math.round(result.heatAfter ?? 0),
           sample: (message.content ?? "").slice(0, 200),
         });

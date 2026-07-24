@@ -4,10 +4,10 @@ import { HeatService } from "../../../src/core/HeatService.js";
 import { RuleCache } from "../../../src/modules/automod/rules/cache.js";
 import { FeedLoader } from "../../../src/modules/automod/feed/loader.js";
 
-function ctxFor(packStates, rules = []) {
+function ctxFor(packStates, rules = [], automodOverrides = {}) {
   return {
     config: {
-      getGuild: vi.fn(async () => ({ automod: { enabled: true, heatThreshold: 50, heatDecaySec: 60, thresholdAction: "timeout", timeoutSeconds: 300, exemptRoles: [], exemptChannels: [] }, dmOnAction: false })),
+      getGuild: vi.fn(async () => ({ automod: { enabled: true, heatThreshold: 50, heatDecaySec: 60, thresholdAction: "timeout", timeoutSeconds: 300, exemptRoles: [], exemptChannels: [], ...automodOverrides }, dmOnAction: false })),
       getPackStates: vi.fn(async () => packStates),
       getAutomodRules: vi.fn(async () => rules),
       addAutomodLog: vi.fn(),
@@ -46,5 +46,23 @@ describe("automod messageCreate", () => {
     msg.member.permissions.has = () => true; // Manage Messages
     await handler.execute(ctx, msg);
     expect(msg.delete).not.toHaveBeenCalled();
+  });
+  it("logs 'flagged' (not 'delete') for a deleteOnHit:false hit that doesn't cross the heat threshold", async () => {
+    // crypto pack's "air drop" rule: weight 35, deleteOnHit:false. With a heat
+    // threshold of 1000 the hit neither deletes the message nor punishes the
+    // member, so the audit log should record "flagged", not "delete".
+    const ctx = ctxFor(
+      [{ packId: "crypto", enabled: true, installedVersion: 1 }],
+      [],
+      { heatThreshold: 1000 },
+    );
+    const msg = { ...scamMessage(), content: "air drop" };
+    await handler.execute(ctx, msg);
+    expect(msg.delete).not.toHaveBeenCalled();
+    expect(msg.member.timeout).not.toHaveBeenCalled();
+    expect(ctx.config.addAutomodLog).toHaveBeenCalledWith(
+      "g",
+      expect.objectContaining({ action: "flagged", dryRun: false }),
+    );
   });
 });
