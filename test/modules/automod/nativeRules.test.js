@@ -15,6 +15,7 @@ import {
   canManage,
   syncNativeRules,
   removeNativeRules,
+  nativeProjection,
 } from "../../../src/modules/automod/native/rules.js";
 
 // Builders keyed by their label (name minus the prefix).
@@ -275,5 +276,16 @@ describe("removeNativeRules", () => {
     const res = await removeNativeRules({ guild: g });
     expect(protectedRule.edit).toHaveBeenCalledWith({ enabled: false });
     expect(res.removed).toBe(1);
+  });
+});
+
+describe("nativeProjection", () => {
+  it("collects keyword filters from enabled packs", () => {
+    const proj = nativeProjection([{ packId: "grabbers", enabled: true }]);
+    expect(proj.keywordFilter).toContain("grabify.link*");
+  });
+  it("omits disabled packs", () => {
+    const proj = nativeProjection([{ packId: "grabbers", enabled: false }]);
+    expect(proj.keywordFilter).not.toContain("grabify.link*");
   });
 });
