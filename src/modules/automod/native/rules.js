@@ -5,6 +5,7 @@ import {
   AutoModerationRuleKeywordPresetType as Preset,
   PermissionFlagsBits,
 } from "discord.js";
+import { PACKS } from "../rules/packs/index.js";
 
 // All bot-provisioned rules share this prefix so we can find and reconcile our
 // own rules on every sync without clobbering rules the server made by hand.
@@ -27,6 +28,23 @@ export const RULE_KEYS = [
   "nativeSpam",
   "nativePresets",
 ];
+
+// Aggregate the native-projection metadata from every enabled pack into flat
+// keyword/regex lists the RULE_BUILDERS can consume. Confusables/heat/edit-
+// distance stay runtime-only — only literal keyword/regex rules project here.
+export function nativeProjection(packStates) {
+  const enabled = new Set(packStates.filter((p) => p.enabled).map((p) => p.packId));
+  const keywordFilter = [];
+  const regexPatterns = [];
+  for (const pack of PACKS) {
+    if (!enabled.has(pack.id)) continue;
+    for (const r of pack.rules) {
+      if (r.native?.keywordFilter) keywordFilter.push(...r.native.keywordFilter);
+      if (r.native?.regexPatterns) regexPatterns.push(...r.native.regexPatterns);
+    }
+  }
+  return { keywordFilter: [...new Set(keywordFilter)], regexPatterns: [...new Set(regexPatterns)] };
+}
 
 // ── Keyword / regex source lists ────────────────────────────────────────────
 const INVITE_KW = [

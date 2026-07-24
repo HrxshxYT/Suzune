@@ -34,9 +34,10 @@ export const TUTORIAL_CHAPTERS = [
   {
     title: `${EMOJIS.gear} Auto-Moderation`,
     body:
-      "Automatically filters bad messages.\n\n" +
-      "• `/automod` opens a **button control panel** — one place for everything.\n" +
-      "• Enable it, pick an action (delete / warn / timeout), and toggle filters: **spam**, **mention-spam**, **invite links**, **external links**, **mass-caps**, **emoji spam**.\n" +
+      "Automatically filters bad messages using curated rule packs and a heat score.\n\n" +
+      "• `/automod panel` opens a **button control panel** — one place for everything.\n" +
+      "• Toggle **rule packs** (Core, Nitro scams, Steam gift scams, Crypto/airdrop, IP grabbers, Raid advertising) or add your own **custom rules** with `/automod rules add`.\n" +
+      "• Violations add **heat** that decays over time; punishment (warn / timeout / kick / ban / quarantine) fires once heat crosses your threshold — try new rules risk-free in **dry-run** mode first.\n" +
       "• Pick **exempt roles/channels** right from the panel's select menus.",
   },
   {
@@ -75,8 +76,7 @@ export const TUTORIAL_CHAPTERS = [
   },
   {
     title: `🎫 Tickets`,
-    body:
-      "**🎫 Tickets** — Run `/tickets` to build panels. Each panel shows a category dropdown members use to open a private ticket channel. Staff can claim, add/remove members, and close (archive → transcript → delete).",
+    body: "**🎫 Tickets** — Run `/tickets` to build panels. Each panel shows a category dropdown members use to open a private ticket channel. Staff can claim, add/remove members, and close (archive → transcript → delete).",
   },
   {
     title: `${EMOJIS.star} Tips & Support`,

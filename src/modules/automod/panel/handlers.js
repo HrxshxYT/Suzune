@@ -1,4 +1,5 @@
 import { RULE_KEYS, syncNativeRules, removeNativeRules } from "../native/rules.js";
+import { handlePacksComponent } from "./packs.js";
 
 // Native-AutoMod boolean columns toggled by the button controls (the per-rule
 // toggles live in the `nrules` multi-select instead).
@@ -90,19 +91,27 @@ export async function handleAutomodComponent(i, state, ctx, render) {
     return "handled";
   }
 
+  // Only the enable toggle lives on the main view now (the six filter
+  // toggles were replaced by packs).
   if (kind === "tog") {
-    const col = parts[2]; // "enabled" or a filter column
-    const next = !state.automod[col];
-    await ctx.config.updateAutomod(state.guildId, { [col]: next });
-    state.automod[col] = next;
+    const col = parts[2]; // "enabled"
+    if (col === "enabled") {
+      const next = !state.automod.enabled;
+      await ctx.config.updateAutomod(state.guildId, { enabled: next });
+      state.automod.enabled = next;
+    }
     return "update";
   }
 
   if (kind === "action") {
-    const action = i.values[0];
-    await ctx.config.updateAutomod(state.guildId, { action });
-    state.automod.action = action;
+    const thresholdAction = i.values[0];
+    await ctx.config.updateAutomod(state.guildId, { thresholdAction });
+    state.automod.thresholdAction = thresholdAction;
     return "update";
+  }
+
+  if (kind === "packs") {
+    return handlePacksComponent(i, state, ctx);
   }
 
   if (kind === "exroles") {

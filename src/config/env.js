@@ -12,6 +12,7 @@ const schema = z.object({
   // to auto-detect spawned shards, which would crash a standalone Client with "auto".
   BOT_SHARD_COUNT: shardCount,
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  SCAM_FEED_URL: z.string().optional(),
 });
 
 export function loadEnv(raw = process.env) {
@@ -29,5 +30,6 @@ export function loadEnv(raw = process.env) {
     devGuildId: e.DEV_GUILD_ID,
     shardCount: e.BOT_SHARD_COUNT,
     logLevel: e.LOG_LEVEL,
+    scamFeedUrl: e.SCAM_FEED_URL,
   };
 }

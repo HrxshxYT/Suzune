@@ -142,20 +142,12 @@ model AutomodConfig {
   guildId         String  @id
   guild           Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
   enabled         Boolean @default(false)
-  antiSpam        Boolean @default(true)
-  spamCount       Int     @default(5)
-  spamWindowSec   Int     @default(5)
-  antiMentionSpam Boolean @default(true)
-  mentionLimit    Int     @default(5)
-  filterInvites   Boolean @default(true)
-  filterLinks     Boolean @default(false)
-  antiCaps        Boolean @default(false)
-  capsPercent     Int     @default(70)
-  capsMinLength   Int     @default(10)
-  antiEmojiSpam   Boolean @default(false)
-  emojiLimit      Int     @default(8)
-  action          String  @default("delete") // delete | warn | timeout
-  timeoutSeconds  Int     @default(300)
+
+  // Heat-based scoring (replaces the legacy fixed filters + single action).
+  heatThreshold   Int     @default(100)
+  heatDecaySec    Int     @default(60)
+  thresholdAction String  @default("timeout") // warn|timeout|kick|ban|quarantine
+
   exemptRoles     Json    @default("[]")
   exemptChannels  Json    @default("[]")
 
@@ -176,6 +168,51 @@ model AutomodConfig {
   nativeAlertChannelId String?
   nativeTimeout        Boolean @default(true)
   nativeTimeoutSeconds Int     @default(300)
+
+  rules      AutomodRule[]
+  packStates AutomodPackState[]
+}
+
+model AutomodRule {
+  id             String        @id @default(cuid())
+  guildId        String
+  config         AutomodConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+  source         String // packId or "custom"
+  pattern        String
+  target         String        @default("any") // raw|normalized|stripped|any
+  weight         Int           @default(20)
+  deleteOnHit    Boolean       @default(true)
+  dryRun         Boolean       @default(false)
+  enabled        Boolean       @default(true)
+  disabledReason String?
+  createdAt      DateTime      @default(now())
+
+  @@index([guildId])
+}
+
+model AutomodPackState {
+  guildId          String
+  config           AutomodConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+  packId           String
+  enabled          Boolean       @default(false)
+  installedVersion Int           @default(0)
+
+  @@id([guildId, packId])
+}
+
+model AutomodLog {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  channelId String
+  source    String
+  action    String
+  dryRun    Boolean  @default(false)
+  heatAfter Int      @default(0)
+  sample    String
+  createdAt DateTime @default(now())
+
+  @@index([guildId, createdAt])
 }
 
 model WelcomeConfig {

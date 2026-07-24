@@ -17,9 +17,13 @@ import { AntinukeState } from "./modules/antinuke/AntinukeState.js";
 import { CaseService } from "./modules/moderation/CaseService.js";
 import { registerExpiryJob } from "./modules/moderation/expiry.js";
 import { registerModLogListener } from "./modules/logging/modLog.js";
+import { registerFeedRefresh } from "./modules/automod/feed/refresh.js";
 import { InviteService } from "./modules/invites/InviteService.js";
 import { InviteCache } from "./modules/invites/InviteCache.js";
 import { AutomodState } from "./modules/automod/AutomodState.js";
+import { HeatService } from "./core/HeatService.js";
+import { FeedLoader } from "./modules/automod/feed/loader.js";
+import { RuleCache } from "./modules/automod/rules/cache.js";
 import { ReactionRoleService } from "./modules/welcome/ReactionRoleService.js";
 import { LevelingService } from "./modules/leveling/LevelingService.js";
 import { TicketService } from "./modules/tickets/TicketService.js";
@@ -108,6 +112,9 @@ export async function startBot() {
     invites: new InviteService(prisma),
     inviteCache: new InviteCache(),
     automod: new AutomodState(),
+    heat: new HeatService(),
+    automodFeed: new FeedLoader({ feedUrl: env.scamFeedUrl ?? null, logger }),
+    automodRules: new RuleCache(logger),
     reactionRoles: new ReactionRoleService(prisma),
     leveling: new LevelingService(prisma),
     tickets: new TicketService(prisma),
@@ -120,6 +127,7 @@ export async function startBot() {
   bindEvents(client, listeners, context);
   registerExpiryJob(context);
   registerModLogListener(context);
+  registerFeedRefresh(context);
   client.once("ready", (c) =>
     logger.info(`Logged in as ${c.user.tag} (shard ready)`));
 
@@ -128,6 +136,12 @@ export async function startBot() {
 
   const pingSampler = setInterval(() => context.pingHistory.push(client.ws.ping), 10_000);
   pingSampler.unref?.();
+
+  // HeatService entries never expire on their own; sweep out decayed-away
+  // entries periodically so the map doesn't grow unbounded. 60s nominal
+  // half-life, swept every 5 minutes.
+  const heatSweep = setInterval(() => context.heat.sweep(60_000), 300_000);
+  heatSweep.unref?.();
 
   return { client, context };
 }

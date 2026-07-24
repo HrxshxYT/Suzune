@@ -15,6 +15,7 @@ import {
   canManage,
   syncNativeRules,
   removeNativeRules,
+  nativeProjection,
 } from "../../../src/modules/automod/native/rules.js";
 
 // Builders keyed by their label (name minus the prefix).
@@ -90,7 +91,9 @@ describe("rule composition", () => {
     const both = B["Malicious Links"].build({ nativeScamLinks: true, nativeGrabbers: true });
     expect(both.keywordFilter.some((k) => k.includes("grabify"))).toBe(true);
 
-    expect(B["Malicious Links"].build({ nativeScamLinks: false, nativeGrabbers: false })).toBeNull();
+    expect(
+      B["Malicious Links"].build({ nativeScamLinks: false, nativeGrabbers: false }),
+    ).toBeNull();
   });
 
   it("Scam & Spam Text packs nitro + crypto + ad categories, null when all off", () => {
@@ -115,7 +118,9 @@ describe("buildRuleDefinition", () => {
   });
 
   it("returns null when the rule's categories are all off", () => {
-    expect(buildRuleDefinition(B["Invite Links"], { ...fullCfg(), nativeInvites: false })).toBeNull();
+    expect(
+      buildRuleDefinition(B["Invite Links"], { ...fullCfg(), nativeInvites: false }),
+    ).toBeNull();
   });
 });
 
@@ -236,7 +241,7 @@ describe("syncNativeRules", () => {
       delete: vi.fn(),
     };
     const g = guild({ rules: [orphan] });
-    const res = await syncNativeRules({ guild: g, automod: fullCfg() });
+    await syncNativeRules({ guild: g, automod: fullCfg() });
     expect(orphan.edit).toHaveBeenCalledOnce();
     expect(g.autoModerationRules.create).toHaveBeenCalledWith(
       expect.objectContaining({ name: `${RULE_PREFIX}Invite Links` }),
@@ -244,7 +249,12 @@ describe("syncNativeRules", () => {
   });
 
   it("never touches rules the server made by hand", async () => {
-    const foreign = { name: "My own rule", triggerType: Trigger.Keyword, edit: vi.fn(), delete: vi.fn() };
+    const foreign = {
+      name: "My own rule",
+      triggerType: Trigger.Keyword,
+      edit: vi.fn(),
+      delete: vi.fn(),
+    };
     const g = guild({ rules: [foreign] });
     await syncNativeRules({ guild: g, automod: { ...fullCfg(), nativeEnabled: false } });
     expect(foreign.delete).not.toHaveBeenCalled();
@@ -275,5 +285,16 @@ describe("removeNativeRules", () => {
     const res = await removeNativeRules({ guild: g });
     expect(protectedRule.edit).toHaveBeenCalledWith({ enabled: false });
     expect(res.removed).toBe(1);
+  });
+});
+
+describe("nativeProjection", () => {
+  it("collects keyword filters from enabled packs", () => {
+    const proj = nativeProjection([{ packId: "grabbers", enabled: true }]);
+    expect(proj.keywordFilter).toContain("grabify.link*");
+  });
+  it("omits disabled packs", () => {
+    const proj = nativeProjection([{ packId: "grabbers", enabled: false }]);
+    expect(proj.keywordFilter).not.toContain("grabify.link*");
   });
 });

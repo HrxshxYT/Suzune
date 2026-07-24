@@ -61,6 +61,64 @@ export class ConfigService {
     return row;
   }
 
+  async getAutomodRules(guildId) {
+    return this.prisma.automodRule.findMany({ where: { guildId } });
+  }
+
+  async addAutomodRule(guildId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.automodRule.create({ data: { guildId, ...data } });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async removeAutomodRule(guildId, id) {
+    await this.prisma.automodRule.deleteMany({ where: { guildId, id } });
+    this.invalidate(guildId);
+  }
+
+  async editAutomodRule(guildId, id, data) {
+    const row = await this.prisma.automodRule.update({ where: { id }, data });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async disableAutomodRule(guildId, id, reason) {
+    const row = await this.prisma.automodRule.update({
+      where: { id },
+      data: { enabled: false, disabledReason: reason },
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async getPackStates(guildId) {
+    return this.prisma.automodPackState.findMany({ where: { guildId } });
+  }
+
+  async setPackState(guildId, packId, data) {
+    await this.getGuild(guildId);
+    const row = await this.prisma.automodPackState.upsert({
+      where: { guildId_packId: { guildId, packId } },
+      create: { guildId, packId, ...data },
+      update: data,
+    });
+    this.invalidate(guildId);
+    return row;
+  }
+
+  async addAutomodLog(guildId, data) {
+    return this.prisma.automodLog.create({ data: { guildId, ...data } });
+  }
+
+  async getAutomodLogs(guildId, limit = 20) {
+    return this.prisma.automodLog.findMany({
+      where: { guildId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  }
+
   async updateWelcome(guildId, data) {
     await this.getGuild(guildId);
     const row = await this.prisma.welcomeConfig.upsert({
